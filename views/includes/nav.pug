@@ -1,0 +1,29 @@
+mixin dropdown(link)
+	.navbar-item.has-dropdown.is-hoverable
+		a.navbar-link= link
+		.navbar-dropdown
+			block
+
+nav.navbar(style="width: 100%; position: fixed; z-index: 100; box-shadow: 0px 3px 6px #888888;")
+	.navbar-brand
+		a.navbar-item(href="/index.html")
+			img(src="assets/img/logo.png")
+			span Template
+		a.navbar-burger(data-target="navMenu")
+			- for (var x = 0; x < 3; x++)
+				span
+	#navMenu.navbar-menu
+		.navbar-start
+			.navbar-item &nbsp;
+			+dropdown("Bob")
+				a.navbar-item(href="bob.html") Bob
+			+dropdown("Bob")
+				a.navbar-item(href="bob.html") Bob
+				a.navbar-item(href="bob.html") Bob
+		.navbar-end
+			.navbar-item.is-paddingless
+				a.button.is-info(href="bob.html")
+					span Bob
+			.navbar-item
+				a.button.is-danger(href="bob.html")
+					span Bob
