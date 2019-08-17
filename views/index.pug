@@ -14,24 +14,28 @@ html(lang="en")
 			+section("Bob")
 				| Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab iusto, error officiis unde, at dolorum nemo facere! Quidem maiores, placeat, non ea commodi aliquid aspernatur, velit odio, rem adipisci quas.
 				.g-signin2(data-onsuccess="onSignIn")
-		tr
-			th Time
-			th A
-			th B
-			th C
-			th D
-			th E
-			th F
-		tbody	
-			- var i=0
-				while n < 31
-					tr= n++
-					td
-					td
-					td
-					td
-					td
-					td
+				table.table
+					thead
+						tr
+							th Time
+							th A
+							th B
+							th C
+							th D
+							th E
+							th F
+					tbody
+						- var i=1
+						while i <= 32
+							tr
+								th= i
+								td.aCol(class=["mod" + i])
+								td.bCol(class=["mod" + i])
+								td.cCol(class=["mod" + i])
+								td.dCol(class=["mod" + i])
+								td.eCol(class=["mod" + i])
+								td.fCol(class=["mod" + i])
+								- i++
 
 		//- Footer
 		include includes/footer.pug
