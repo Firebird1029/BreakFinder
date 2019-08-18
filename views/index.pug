@@ -2,40 +2,37 @@ doctype html
 html(lang="en")
 	include includes/head.pug
 	body
-		section.hero.is-full-height
-			.hero-head
-				include includes/nav.pug
-			.hero-body
-				.container.has-text-centered
-					h1.title.is-1(style="padding-top: 1rem;") BreakFinder
-			.hero-foot
 		article.article
 			include includes/body.pug
-			+section("Bob")
-				| Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab iusto, error officiis unde, at dolorum nemo facere! Quidem maiores, placeat, non ea commodi aliquid aspernatur, velit odio, rem adipisci quas.
-				.g-signin2(data-onsuccess="onSignIn")
-				table.table
-					thead
-						tr
-							th Time
-							th A
-							th B
-							th C
-							th D
-							th E
-							th F
-					tbody
-						- var i=1
-						while i <= 32
-							tr
-								th= i
-								td.aCol(class=["mod" + i])
-								td.bCol(class=["mod" + i])
-								td.cCol(class=["mod" + i])
-								td.dCol(class=["mod" + i])
-								td.eCol(class=["mod" + i])
-								td.fCol(class=["mod" + i])
-								- i++
+			section.section.is-paddingless
+				.container.has-text-centered
+					h1.title.is-1(style="padding-top: 1rem;") BreakFinder
+			section.section
+				.container.has-text-justified
+					.content
+						.g-signin2(data-onsuccess="onSignIn")
+						table.table
+							thead
+								tr
+									th Time
+									th A
+									th B
+									th C
+									th D
+									th E
+									th F
+							tbody
+								- var i=1
+								while i <= 32
+									tr
+										th= i
+										td.aCol(class=["mod" + i])
+										td.bCol(class=["mod" + i])
+										td.cCol(class=["mod" + i])
+										td.dCol(class=["mod" + i])
+										td.eCol(class=["mod" + i])
+										td.fCol(class=["mod" + i])
+										- i++
 
 		//- Footer
 		include includes/footer.pug
