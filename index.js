@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 });
 
 // Use cheerio to process schedule data and find breaks
-function getDataFromTable(html) {
+function getDataFromTable(html, val) {
 	var data = [[],[],[],[],[],[]];
 	const $ = cheerio.load(html);
 	for (var i = 1; i < 33; i++) {
@@ -76,22 +76,44 @@ function getStudentData(username, password) {
 		.click("a[href='https://mybackpack.punahou.edu/SeniorApps/studentParent/schedule.faces?selectedMenuId=true']")
 		.wait("select")
 		.evaluate(function(){
-			return document.querySelector("select").children[1].value;
+			for (var i = 0; i < document.querySelector("select").children.length; i++) {
+				if (document.querySelector("select").children[i].innerHTML == "Punahou Academy") {
+					return document.querySelector("select").children[i].value;
+				}
+			}
 		})
 		.then(value => {
 			nightmare
+				.wait(500)
 				.select('select', value)
-				.wait(1000)
-				.click("input.chartButtonUp")
-				.wait(1000)
-				.evaluate(() => document.body.innerHTML)
-				.then(response => {
-					getDataFromTable(response);
+				.wait(2000)
+				.evaluate(function(){
+					if (document.querySelector("input.chartButtonUp") === null) {
+						return false;
+					} else {
+						return true;
+					}
+				})
+				.then(inputExists => {
+					if (inputExists) {
+						nightmare
+							.wait("input.chartButtonUp")
+							.click("input.chartButtonUp")
+					}
+					nightmare
+						.wait(5000)
+						.evaluate(() => document.body.innerHTML)
+						.then(response => {
+							getDataFromTable(response, value);
+							nightmare.end();
+						})
+						.catch(error => {
+							console.error('Error:', error);
+						})
 				})
 				.catch(error => {
-					console.error('Search failed:', error);
+					console.error('Error:', error);
 				})
-			nightmare.end();
 		})
 		.catch(error => {
 			console.error('Search failed:', error);
@@ -100,7 +122,7 @@ function getStudentData(username, password) {
 }
 
 // For testing
-getStudentData("USERNAME HERE", "PASSWORD HERE");
+getStudentData("jtay20", "yellow2Kite!");
 
 // var router = require("./routes/routes.js");
 // app.use("/", router);
