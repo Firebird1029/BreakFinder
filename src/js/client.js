@@ -13,6 +13,17 @@ socket.on("connectionReceived", function connectionReceived () {
 	// 
 });
 
+$("#logout").on("click", function() {
+	var auth2 = gapi.auth2.getAuthInstance();
+	auth2.signOut().then(function () {
+	  console.log('User signed out.');
+	});
+});
+
+// $(".g-signin2").click(function() {
+// 	$("#submitPunahouData").click();
+// })
+
 function onSignIn(googleUser) {
 	var profile = googleUser.getBasicProfile();
 	console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
@@ -20,5 +31,7 @@ function onSignIn(googleUser) {
 	console.log('Image URL: ' + profile.getImageUrl());
 	console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
 	var id_token = googleUser.getAuthResponse().id_token;
-	socket.emit("idToken", {idToken: id_token});
+	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val()});
+	$("#punahouUsername").val("");
+	$("#punahouPassword").val("");
 }

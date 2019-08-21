@@ -28,6 +28,7 @@ var express = require("express"),
 	Nightmare = require("nightmare"),
 	nightmare = Nightmare({ show: false }),
 	cheerio = require("cheerio"),
+	jsonfile = require("jsonfile"),
 
 	// Utilities & Custom Modules
 	utils = require("./utils.js");
@@ -42,8 +43,20 @@ app.use((req, res, next) => {
 	res.status(404).render("404.pug");
 });
 
+
+function storeUserData(data) {
+	jsonfile.readFile("models/data.json", function (err, obj) {
+		if (err) console.error(err)
+		var newData = JSON.parse(JSON.stringify(obj));
+		newData["users"].push(data);
+		jsonfile.writeFile("models/data.json", newData, function (err) {
+			if (err) console.error(err)
+		})
+	})
+}
+
 // Use cheerio to process schedule data and find breaks
-function getDataFromTable(html, val) {
+function getDataFromTable(html, val, callback) {
 	var data = [[],[],[],[],[],[]];
 	const $ = cheerio.load(html);
 	for (var i = 1; i < 33; i++) {
@@ -59,13 +72,13 @@ function getDataFromTable(html, val) {
 			}
 		}
 	}
-	console.log(data);
+	callback(data);
 }
 
 /* Pull student schedule from myBackpack using the username and password to login
  * The studentNum is the student's id number, which is used to select the correct schedule
  */
-function getStudentData(username, password) {
+function getStudentData(username, password, callback) {
 	nightmare
 		.goto('https://mybackpack.punahou.edu/SeniorApps/facelets/registration/loginCenter.xhtml')
 		.wait('body')
@@ -104,8 +117,12 @@ function getStudentData(username, password) {
 						.wait(5000)
 						.evaluate(() => document.body.innerHTML)
 						.then(response => {
-							getDataFromTable(response, value);
-							nightmare.end();
+							getDataFromTable(response, value, function(data) {
+								console.log(data);
+								nightmare.end();
+								callback(data);
+							});
+							
 						})
 						.catch(error => {
 							console.error('Error:', error);
@@ -122,7 +139,7 @@ function getStudentData(username, password) {
 }
 
 // For testing
-getStudentData("jtay20", "yellow2Kite!");
+
 
 // var router = require("./routes/routes.js");
 // app.use("/", router);
@@ -148,6 +165,9 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 		  console.log(payload);
 		  // If request specified a G Suite domain:
 		  //const domain = payload['hd'];
+		  getStudentData(options.username, options.password, function(studentData) {
+		  	 storeUserData({"user":payload['sub'], "schedule":studentData})
+		  });
 		}
 		verify().catch(console.error);
 	});
