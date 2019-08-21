@@ -1,5 +1,5 @@
 "use strict"; /* eslint-env node */ /* global */ /* eslint no-warning-comments: [1, { "terms": ["todo", "fix", "help"], "location": "anywhere" }] */
-var debug = false;
+var debug = true;
 
 /*
  * Notes
@@ -26,12 +26,18 @@ var express = require("express"),
 	io = require("socket.io"),
 	listener = io.listen(server),
 	Nightmare = require("nightmare"),
-	nightmare = Nightmare({ show: false }),
+	nightmare = Nightmare({show: false}),
 	cheerio = require("cheerio"),
 	jsonfile = require("jsonfile"),
 
 	// Utilities & Custom Modules
+	_ = require("lodash"),
 	utils = require("./utils.js");
+
+// Google Packages & Keys
+const {OAuth2Client} = require("google-auth-library");
+const secretGoogleKey = "831400703769-dgio9hsp0mh3hmndc4rg1ljaakusbolu.apps.googleusercontent.com";
+const client = new OAuth2Client(secretGoogleKey);
 
 // Setup Express Middleware
 app.set("view engine", "pug");
@@ -43,16 +49,34 @@ app.use((req, res, next) => {
 	res.status(404).render("404.pug");
 });
 
+// var router = require("./routes/routes.js");
+// app.use("/", router);
 
-function storeUserData(data) {
+// Model Functions -- User Data
+function storeUserData (data, callback) {
 	jsonfile.readFile("models/data.json", function (err, obj) {
-		if (err) console.error(err)
+		if (err) console.error(err);
 		var newData = JSON.parse(JSON.stringify(obj));
-		newData["users"].push(data);
-		jsonfile.writeFile("models/data.json", newData, function (err) {
-			if (err) console.error(err)
-		})
-	})
+		if (!_.find(newData.users, {user: data.user})) {
+			// User doesn't exist yet
+			debug && console.log("Creating new user");
+			newData.users.push(data);
+			jsonfile.writeFile("models/data.json", newData, function (err) {
+				if (err) console.error(err);
+				callback();
+			});
+		} else {
+			callback();
+		}
+	});
+}
+
+function getUserData (userToGet, callback) {
+	jsonfile.readFile("models/data.json", function (err, obj) {
+		if (err) console.error(err);
+		var user = _.find(obj.users, {user: userToGet});
+		callback(user);
+	});
 }
 
 // Use cheerio to process schedule data and find breaks
@@ -77,8 +101,8 @@ function getDataFromTable(html, val, callback) {
 
 /* Pull student schedule from myBackpack using the username and password to login
  * The studentNum is the student's id number, which is used to select the correct schedule
- */
-function getStudentData(username, password, callback) {
+*/
+function getStudentData (username, password, callback) {
 	nightmare
 		.goto('https://mybackpack.punahou.edu/SeniorApps/facelets/registration/loginCenter.xhtml')
 		.wait('body')
@@ -118,56 +142,72 @@ function getStudentData(username, password, callback) {
 						.evaluate(() => document.body.innerHTML)
 						.then(response => {
 							getDataFromTable(response, value, function(data) {
-								console.log(data);
+								debug && console.log(data);
 								nightmare.end();
 								callback(data);
 							});
 							
 						})
 						.catch(error => {
-							console.error('Error:', error);
+							console.error("Error: ", error);
 						})
 				})
 				.catch(error => {
-					console.error('Error:', error);
+					console.error("Error: ", error);
 				})
 		})
 		.catch(error => {
-			console.error('Search failed:', error);
+			console.error("Search failed: ", error);
 			// Failed login or something wrong
-		})
+		});
 }
-
-// For testing
-
-
-// var router = require("./routes/routes.js");
-// app.use("/", router);
 
 // Socket.io Control
 listener.sockets.on("connection", function connectionDetected (socket) {
 	socket.on("refreshRequest", function processRefreshRequest (options) {
 		socket.emit("refreshResponse", {});
 	});
+	// Google Sign-In
 	socket.on("idToken", function processGoogleIDToken (options) {
-		const {OAuth2Client} = require('google-auth-library');
-		const client = new OAuth2Client("831400703769-dgio9hsp0mh3hmndc4rg1ljaakusbolu.apps.googleusercontent.com"); // "831400703769-dgio9hsp0mh3hmndc4rg1ljaakusbolu"
 		var userid;
-		async function verify() {
-		  const ticket = await client.verifyIdToken({
-		      idToken: options.idToken,
-		      audience: "831400703769-dgio9hsp0mh3hmndc4rg1ljaakusbolu.apps.googleusercontent.com",  // Specify the CLIENT_ID of the app that accesses the backend
-		      // Or, if multiple clients access the backend:
-		      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
-		  });
-		  const payload = ticket.getPayload();
-		  userid = payload['sub'];
-		  console.log(payload);
-		  // If request specified a G Suite domain:
-		  //const domain = payload['hd'];
-		  getStudentData(options.username, options.password, function(studentData) {
-		  	 storeUserData({"user":payload['sub'], "schedule":studentData})
-		  });
+		async function verify () {
+			const ticket = await client.verifyIdToken({
+				idToken: options.idToken,
+				audience: secretGoogleKey,	// Specify the CLIENT_ID of the app that accesses the backend
+				// Or, if multiple clients access the backend:
+				//[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+			});
+			const payload = ticket.getPayload();
+			userid = payload["sub"];
+			debug && console.log(payload);
+			// If request specified a G Suite domain:
+			//const domain = payload['hd'];
+			
+			// After Google Verification Process
+			if (options.username && options.password) {
+				// TODO: Move this to client-side code
+				// TODO: run nightmare for new users only
+				// Username & password both exist --> new user (although username/password might be wrong)
+				getStudentData(options.username, options.password, function (studentData) {
+					 storeUserData({user: payload.sub, schedule: studentData}, function () {
+					 	getUserData(payload.sub, function (userData) {
+ 							socket.emit("scheduleModelToClient", userData);
+	 					});
+					 });
+				});
+			} else {
+				// Username and/or password missing --> check if user exists or not
+				getUserData(payload.sub, function (userData) {
+					if (userData) {
+						// User exists, so send back their schedule
+						socket.emit("scheduleModelToClient", userData);
+					} else {
+						// User doesn't exist, so log them back out >:(
+						debug && console.log("User doesn't exist, logging out");
+						socket.emit("logoutPlease");
+					}
+				});
+			}
 		}
 		verify().catch(console.error);
 	});

@@ -8,12 +8,14 @@ html(lang="en")
 				.container.has-text-centered
 					h1.title.is-1(style="padding-top: 1rem;") BreakFinder
 			section.section
+				.container: .content
+						input.input#punahouUsername.loginItems(type="username")
+						input.input#punahouPassword.loginItems(type="password")
+						.g-signin2.loginItems(data-onsuccess="onSignIn")
+						button#logout.button.is-hidden Logout
+			section.section
 				.container.has-text-justified
 					.content
-						input#punahouUsername
-						input#punahouPassword(type="password")
-						button#logout
-						.g-signin2(data-onsuccess="onSignIn")
 						table.table
 							thead
 								tr

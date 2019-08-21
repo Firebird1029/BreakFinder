@@ -34,6 +34,7 @@
 		"google-auth-library": "^5.2.0",
 		"helmet": "^3.20.0",
 		"jsonfile": "^5.0.0",
+		"lodash": "^4.17.15",
 		"nightmare": "^3.0.2",
 		"npm": "^6.10.3",
 		"pug": "^2.0.4",
