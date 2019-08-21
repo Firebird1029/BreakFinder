@@ -4,6 +4,7 @@
 # Custom - Remove as necessary
 vendor
 dist/
+models/
 
 # Compiled source #
 ###################
