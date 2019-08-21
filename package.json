@@ -31,6 +31,7 @@
 		"bulma": "^0.7.5",
 		"cheerio": "^1.0.0-rc.3",
 		"express": "^4.17.1",
+		"google-auth-library": "^5.2.0",
 		"helmet": "^3.20.0",
 		"nightmare": "^3.0.2",
 		"npm": "^6.10.3",
