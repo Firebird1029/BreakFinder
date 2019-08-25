@@ -31,6 +31,11 @@ socket.on("scheduleModelToClient", function (userData) {
 	}
 });
 
+$("#addUserButton").click(function() {
+	socket.emit("addUserRequest", $("#addUser").val());
+	$("#addUser").val("");
+});
+
 $("#logout").on("click", function() {
 	var auth2 = gapi.auth2.getAuthInstance();
 	auth2.signOut().then(function () {

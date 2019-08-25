@@ -189,7 +189,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 				// TODO: run nightmare for new users only
 				// Username & password both exist --> new user (although username/password might be wrong)
 				getStudentData(options.username, options.password, function (studentData) {
-					 storeUserData({user: payload.sub, schedule: studentData}, function () {
+					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: studentData, following: [], followRequests: []}, function () {
 					 	getUserData(payload.sub, function (userData) {
  							socket.emit("scheduleModelToClient", userData);
 	 					});
