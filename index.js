@@ -4,6 +4,11 @@ var debug = true;
 /*
  * Notes
  *
+ * TODO
+ * Make code async -- so 2 ppl can run at same time
+ * Make loading symbol for after they type in password and waiting for nightmare
+ * Comment EVERYTHING
+ *
  * Resources:
  * https://bulma.io/documentation/
  * https://pugjs.org/api/getting-started.html
@@ -70,7 +75,6 @@ function storeUserData (data, callback) {
 		}
 	});
 }
-
 function getUserData (userToGet, callback) {
 	jsonfile.readFile("models/data.json", function (err, obj) {
 		if (err) console.error(err);
@@ -78,22 +82,29 @@ function getUserData (userToGet, callback) {
 		callback(user);
 	});
 }
-
+function getUserDataByPunName (punName, callback) {
+	jsonfile.readFile("models/data.json", function (err, obj) {
+		if (err) console.error(err);
+		var user = _.find(obj.users, {punName: punName});
+		callback(user);
+	});
+}
 function editUserDataByPunName (punName, data, callback) {
 	jsonfile.readFile("models/data.json", function (err, obj) {
 		if (err) console.error(err);
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (_.find(newData.users, {punName: punName})) {
-			debug && console.log("Editing User: " + punName);
+			debug && console.log("Editing user: " + punName);
 			 newData.users[_.findIndex(newData.users, {punName: punName})]= _.assign(newData.users[_.findIndex(newData.users, {punName: punName})], data);
 			
 			jsonfile.writeFile("models/data.json", newData, function (err) {
 				if (err) console.error(err);
+				debug && console.log("Finished editing user: " + punName);
 				callback();
 			});
 		} else {
 			callback();
-			// TODO: Deal with when account isn't existing
+			// TODO: Deal with when account isn't existing -- this means I typed jtay02 instead of jtay20
 		}
 	});
 }
@@ -181,15 +192,47 @@ function getStudentData (username, password, callback) {
 		});
 }
 
+// User Manipulation Functions
+function compileFriendScheds (punName, callback) {
+	// Who are your friends? Let's look in your user object and find out, so we can loop through them and pull the scheds!
+	var compileFriendScheds = [];
+	getUserDataByPunName(punName, function (userObject) {
+		utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
+			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
+			getUserDataByPunName(currentFriend, function (friendUserObject) {
+				compileFriendScheds.push(friendUserObject.schedule);
+				report();
+			});
+		}, function () {
+			// Done looping through your following array. Call back with the array of all your friends' schedules.
+			callback(compileFriendScheds);
+		});
+	});
+}
+
 // Socket.io Control
 listener.sockets.on("connection", function connectionDetected (socket) {
 	socket.on("refreshRequest", function processRefreshRequest (options) {
 		socket.emit("refreshResponse", {});
 	});
-	socket.on("addUserRequest", function addUser(request) {
-		_.find(users, {'punName': request.asker});
-		
-	})
+
+	// Add User Request
+	socket.on("CSaddUserRequest", function addUser (request) {
+		debug && console.log("Running CSaddUserRequest");
+		// Add follow request function TODO -- so I can follow multiple people
+		editUserDataByPunName(request.requesting, {followRequests: [request.asker]}, function () {
+			socket.emit("SCaddUserRequestSccessful", {originalRequest: request});
+		});
+	});
+
+	// Send Back All Schedules You're Following
+	socket.on("CSsendMyFriendScheds", function sendFriendSchedsToClient (request) {
+		debug && console.log("Running CSsendMyFriendScheds");
+		compileFriendScheds(request.asker, function (schedulesArray) {
+			socket.emit("SCcompiledFriendScheds", {schedules: schedulesArray});
+		});
+	});
+
 	// Google Sign-In
 	socket.on("idToken", function processGoogleIDToken (options) {
 		var userid;
@@ -202,7 +245,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 			});
 			const payload = ticket.getPayload();
 			userid = payload["sub"];
-			debug && console.log(payload);
+			// debug && console.log(payload);
 			// If request specified a G Suite domain:
 			//const domain = payload['hd'];
 			
