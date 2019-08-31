@@ -116,7 +116,7 @@ function onSignIn (googleUser) {
 
 	// Socket Code
 	var nameArray = profile.getName().split(" ");
-	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val(), fname: nameArray[0], lname: nameArray[nameArray.length - 1]});
+	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val(), fname: nameArray[0], lname: nameArray[nameArray.length - 1], nightmareData: userProfile.nightmareData});
 	$("#punahouUsername").val("");
 	$("#punahouPassword").val("");
 
@@ -124,6 +124,34 @@ function onSignIn (googleUser) {
 	$(".initiallyHidden").removeClass("is-invisible");
 	$("#loginSection").addClass("is-hidden");
 }
+
+$("#punahouLogin").click(function() {
+	socket.emit("nightmareLogin", {username: $("#punahouUsername").val(), password: $("#punahouPassword").val()});
+	$("#failMessage").addClass("is-invisible");
+	$("#punahouUsername").val("");
+	$("#punahouPassword").val("");
+
+	$("#punahouLogin").attr("disabled", "true");
+	$("#punahouUsername").attr("disabled", "true");
+	$("#punahouPassword").attr("disabled", "true");
+});
+
+
+socket.on("failedLogin", function() {
+	$("#failMessage").removeClass("is-invisible");
+	$("#punahouLogin").removeAttr("disabled");
+	$("#punahouUsername").removeAttr("disabled");
+	$("#punahouPassword").removeAttr("disabled");
+})
+
+socket.on("successfulLogin", function(studentData) {
+	$("#punahouUsername").addClass("is-invisible");
+	$("#punahouPassword").addClass("is-invisible");
+	$("#punahouLogin").addClass("is-invisible");
+	$(".g-signin2").removeClass("is-invisible");
+	$("#failMessage").addClass("is-invisible");
+	userProfile.nightmareData = studentData;
+})
 
 function displayMasterSched() {
 	for (var i = 0; i < masterSched.length; i++) {
