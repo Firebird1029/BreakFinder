@@ -85,8 +85,8 @@ function editUserDataByPunName (punName, data, callback) {
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (_.find(newData.users, {punName: punName})) {
 			debug && console.log("Editing User: " + punName);
-			newData.
-			newData..push(data);
+			 newData.users[_.findIndex(newData.users, {punName: punName})]= _.assign(newData.users[_.findIndex(newData.users, {punName: punName})], data);
+			
 			jsonfile.writeFile("models/data.json", newData, function (err) {
 				if (err) console.error(err);
 				callback();
