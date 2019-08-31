@@ -209,6 +209,22 @@ function compileFriendScheds (punName, callback) {
 		});
 	});
 }
+function acceptFollowRequest (punName, callback) {
+	// Who are your friends? Let's look in your user object and find out, so we can loop through them and pull the scheds!
+	var compileFriendScheds = [];
+	getUserDataByPunName(punName, function (userObject) {
+		utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
+			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
+			getUserDataByPunName(currentFriend, function (friendUserObject) {
+				compileFriendScheds.push(friendUserObject.schedule);
+				report();
+			});
+		}, function () {
+			// Done looping through your following array. Call back with the array of all your friends' schedules.
+			callback(compileFriendScheds);
+		});
+	});
+}
 
 // Socket.io Control
 listener.sockets.on("connection", function connectionDetected (socket) {
@@ -217,7 +233,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	});
 
 	// Add User Request
-	socket.on("CSaddUserRequest", function addUser (request) {
+	socket.on("C2SaddUserRequest", function addUser (request) {
 		debug && console.log("Running CSaddUserRequest");
 		// Add follow request function TODO -- so I can follow multiple people
 		editUserDataByPunName(request.requesting, {followRequests: [request.asker]}, function () {
@@ -226,10 +242,13 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	});
 
 	// Send Back All Schedules You're Following
-	socket.on("CSsendMyFriendScheds", function sendFriendSchedsToClient (request) {
+	socket.on("C2SsendMyFriendScheds", function sendFriendSchedsToClient (request) {
 		debug && console.log("Running CSsendMyFriendScheds");
 		compileFriendScheds(request.asker, function (schedulesArray) {
-			socket.emit("SCcompiledFriendScheds", {schedules: schedulesArray});
+			socket.emit("S2CcompiledFriendScheds", {schedules: schedulesArray});
+		});
+		getUserDataByPunName(request.asker, function (userObject) {
+			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});
 		});
 	});
 
@@ -257,7 +276,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 				getStudentData(options.username, options.password, function (studentData) {
 					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: studentData, following: [], followRequests: []}, function () {
 					 	getUserData(payload.sub, function (userData) {
- 							socket.emit("scheduleModelToClient", userData);
+ 							socket.emit("S2CsendBasicUserData", userData);
 	 					});
 					 });
 				});
@@ -266,7 +285,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 				getUserData(payload.sub, function (userData) {
 					if (userData) {
 						// User exists, so send back their schedule
-						socket.emit("scheduleModelToClient", userData);
+						socket.emit("S2CsendBasicUserData", userData);
 					} else {
 						// User doesn't exist, so log them back out >:(
 						debug && console.log("User doesn't exist, logging out");

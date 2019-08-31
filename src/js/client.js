@@ -34,8 +34,10 @@ socket.on("logoutPlease", function () {
 });
 
 // DOM Make the Schedule Table Upon Receiving Sched via Socket.io
-socket.on("scheduleModelToClient", function (userData) {
-	debug && console.log("Running scheduleModelToClient");
+socket.on("S2CsendBasicUserData", function (userData) {
+	debug && console.log("Running S2CsendBasicUserData");
+	// TODO -- why so much back & forth
+	socket.emit("C2SsendMyFriendScheds", {asker: userProfile.punName});
 	debug && console.log(userData);
 	userProfile.schedule = userData.schedule;
 	for (var i = 0; i < userData.schedule.length; i++) {
@@ -49,11 +51,11 @@ socket.on("scheduleModelToClient", function (userData) {
 });
 
 // Socket: Server Sent Back All Your Friends' Schedules
-socket.on("SCcompiledFriendScheds", function (serverData) {
+socket.on("S2CcompiledFriendScheds", function (serverData) {
 	debug && console.log("Running SCcompiledFriendScheds");
 	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
 	for (var i = 0; i < serverData.schedules.length; i++) {
-		debug && console.log(serverData.schedules[i]);
+		// debug && console.log(serverData.schedules[i]);
 		for (var m = 0; m < serverData.schedules[i].length; m++) {
 			for (var n = 0; n < serverData.schedules[i][m].length; n++) {
 				if (!serverData.schedules[i][m][n]) {
@@ -68,15 +70,19 @@ socket.on("SCcompiledFriendScheds", function (serverData) {
 	}
 });
 
-// Add User Button Clicked, send message to server
-$("#addUserButton").click(function() {
-	socket.emit("CSaddUserRequest", {asker: userProfile.punName, requesting: $("#addUserInput").val()});
-	$("#addUserInput").val("");
+// Socket: Server Sent Back Your Follow Requests (the people who want to follow your schedule)
+socket.on("S2CfollowRequests", function (serverData) {
+	debug && console.log("Running S2CfollowRequests");
+	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
+	for (var i = 0; i < serverData.followRequests.length; i++) {
+		$("#followRequestsDiv").append(serverData.followRequests[i]);
+	}
 });
 
-// Ask for and receive friend schedules that you are following
-$("#monkeypoop").click(function () {
-	socket.emit("CSsendMyFriendScheds", {asker: userProfile.punName});
+// Add User Button Clicked, send message to server
+$("#addUserButton").click(function() {
+	socket.emit("C2SaddUserRequest", {asker: userProfile.punName, requesting: $("#addUserInput").val()});
+	$("#addUserInput").val("");
 });
 
 // Google Sign-In
