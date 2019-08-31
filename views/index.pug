@@ -14,7 +14,8 @@ html(lang="en")
 						#loginSection
 							input.input#punahouUsername.loginItems(type="username")
 							input.input#punahouPassword.loginItems(type="password")
-							.g-signin2.loginItems(data-onsuccess="onSignIn")
+							button.button#punahouLogin.loginItems Login
+							.g-signin2.loginItems.is-invisible(data-onsuccess="onSignIn")
 						#sideBarContainer.initiallyHidden.is-invisible
 							#logoutSection
 								.container: .content
