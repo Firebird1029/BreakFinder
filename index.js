@@ -79,6 +79,25 @@ function getUserData (userToGet, callback) {
 	});
 }
 
+function editUserDataByPunName (punName, data, callback) {
+	jsonfile.readFile("models/data.json", function (err, obj) {
+		if (err) console.error(err);
+		var newData = JSON.parse(JSON.stringify(obj));
+		if (_.find(newData.users, {punName: punName})) {
+			debug && console.log("Editing User: " + punName);
+			newData.
+			newData..push(data);
+			jsonfile.writeFile("models/data.json", newData, function (err) {
+				if (err) console.error(err);
+				callback();
+			});
+		} else {
+			callback();
+			// TODO: Deal with when account isn't existing
+		}
+	});
+}
+
 // Use cheerio to process schedule data and find breaks
 function getDataFromTable(html, val, callback) {
 	var data = [[],[],[],[],[],[]];
@@ -167,6 +186,10 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	socket.on("refreshRequest", function processRefreshRequest (options) {
 		socket.emit("refreshResponse", {});
 	});
+	socket.on("addUserRequest", function addUser(request) {
+		_.find(users, {'punName': request.asker});
+		
+	})
 	// Google Sign-In
 	socket.on("idToken", function processGoogleIDToken (options) {
 		var userid;

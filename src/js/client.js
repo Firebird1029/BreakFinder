@@ -32,7 +32,7 @@ socket.on("scheduleModelToClient", function (userData) {
 });
 
 $("#addUserButton").click(function() {
-	socket.emit("addUserRequest", $("#addUser").val());
+	socket.emit("addUserRequest", {asker: getUser(), requesting: $("#addUser").val()});
 	$("#addUser").val("");
 });
 
