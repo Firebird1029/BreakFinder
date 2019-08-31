@@ -200,8 +200,11 @@ function compileFriendScheds (punName, callback) {
 		utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
 			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
 			getUserDataByPunName(currentFriend, function (friendUserObject) {
-				compileFriendScheds.push(friendUserObject.schedule);
-				report();
+				if (friendUserObject) {
+					debug && console.log(friendUserObject);
+					compileFriendScheds.push(friendUserObject);
+					report();
+				}
 			});
 		}, function () {
 			// Done looping through your following array. Call back with the array of all your friends' schedules.
@@ -244,6 +247,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	// Send Back All Schedules You're Following
 	socket.on("C2SsendMyFriendScheds", function sendFriendSchedsToClient (request) {
 		debug && console.log("Running CSsendMyFriendScheds");
+		console.log(request)
 		compileFriendScheds(request.asker, function (schedulesArray) {
 			socket.emit("S2CcompiledFriendScheds", {schedules: schedulesArray});
 		});
@@ -274,7 +278,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 				// TODO: run nightmare for new users only
 				// Username & password both exist --> new user (although username/password might be wrong)
 				getStudentData(options.username, options.password, function (studentData) {
-					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: studentData, following: [], followRequests: []}, function () {
+					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: studentData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {
 					 	getUserData(payload.sub, function (userData) {
  							socket.emit("S2CsendBasicUserData", userData);
 	 					});

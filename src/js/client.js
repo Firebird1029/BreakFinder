@@ -2,7 +2,13 @@
 
 var debug = true,
 	userProfile = {}, // The profile of the user
-	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"};
+	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"},
+	masterSched = [[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]];
 
 // Navbar Burger
 $(document).ready(function () {
@@ -56,18 +62,25 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
 	for (var i = 0; i < serverData.schedules.length; i++) {
 		// debug && console.log(serverData.schedules[i]);
-		for (var m = 0; m < serverData.schedules[i].length; m++) {
-			for (var n = 0; n < serverData.schedules[i][m].length; n++) {
-				if (!serverData.schedules[i][m][n]) {
+		for (var m = 0; m < serverData.schedules[i].schedule.length; m++) {
+			for (var n = 0; n < serverData.schedules[i].schedule[m].length; n++) {
+				if (!serverData.schedules[i].schedule[m][n]) {
 					// Break! Great! Now let's see if you, the user, also has that break
 					// $("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "red");
-					if (userProfile.schedule[m][n] === serverData.schedules[i][m][n]) {
-						$("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "green").text("Jason");
+					if (userProfile.schedule[m][n] === serverData.schedules[i].schedule[m][n]) {
+						//$("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "green").text("Jason");
+						console.log(m, n);
+						console.log(masterSched);
+						console.log(masterSched[m][n]);
+						// var scheduleCell = {color: "green", text:}
+						console.log(serverData.schedules[i].fname);
+						masterSched[m][n].push(serverData.schedules[i].fname)
 					}
 				}
 			}
 		}
 	}
+	displayMasterSched();
 });
 
 // Socket: Server Sent Back Your Follow Requests (the people who want to follow your schedule)
@@ -97,10 +110,25 @@ function onSignIn (googleUser) {
 	console.log("Email: " + profile.getEmail()); // This is null if the 'email' scope is not present.
 	var id_token = googleUser.getAuthResponse().id_token;
 
+	var nameArray = profile.getName().split(" ");
 	// Our Code
-	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val()});
+	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val(), fname: nameArray[0], lname: nameArray[nameArray.length - 1]});
 	$("#punahouUsername").val("");
 	$("#punahouPassword").val("");
 	$(".loginItems").addClass("is-hidden");
 	$("#logout").removeClass("is-hidden");
+}
+
+function displayMasterSched() {
+	for (var i = 0; i < masterSched.length; i++) {
+		for (var j = 0; j < masterSched[i].length; j++) {
+			if (masterSched[i][j].length > 0) {
+				var text = "";
+				for (var k = 0; k < masterSched[i][j].length; k++) {
+					text = text + " " + masterSched[i][j][k]
+				}
+				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+			}
+		}
+	}
 }
