@@ -95,7 +95,39 @@ function editUserDataByPunName (punName, data, callback) {
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (_.find(newData.users, {punName: punName})) {
 			debug && console.log("Editing user: " + punName);
-			 newData.users[_.findIndex(newData.users, {punName: punName})]= _.assign(newData.users[_.findIndex(newData.users, {punName: punName})], data);
+			var userIndex = _.findIndex(newData.users, {punName: punName});
+			newData.users[userIndex]= _.assign(newData.users[userIndex], data);
+			
+			jsonfile.writeFile("models/data.json", newData, function (err) {
+				if (err) console.error(err);
+				debug && console.log("Finished editing user: " + punName);
+				callback();
+			});
+		} else {
+			callback();
+			// TODO: Deal with when account isn't existing -- this means I typed jtay02 instead of jtay20
+		}
+	});
+}
+function editUserDataByPunNameArray (punName, command, arrayName, data, callback) {
+	jsonfile.readFile("models/data.json", function (err, obj) {
+		if (err) console.error(err);
+		var newData = JSON.parse(JSON.stringify(obj));
+		if (_.find(newData.users, {punName: punName})) {
+			debug && console.log("Editing user: " + punName);
+			var userIndex = _.findIndex(newData.users, {punName: punName});
+			if (command === "push") {
+				if (newData.users[userIndex][arrayName].indexOf(data) < 0) {
+					// Does not yet exist in array, so add it
+					newData.users[userIndex][arrayName].push(data);
+				}
+			}
+			if (command === "_remove") {
+				// Will not remove it if it doesn't exist automatically
+				_.remove(newData.users[userIndex][arrayName], function (n) {
+					return n === data;
+				});
+			}
 			
 			jsonfile.writeFile("models/data.json", newData, function (err) {
 				if (err) console.error(err);
@@ -201,26 +233,10 @@ function compileFriendScheds (punName, callback) {
 			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
 			getUserDataByPunName(currentFriend, function (friendUserObject) {
 				if (friendUserObject) {
-					debug && console.log(friendUserObject);
+					// debug && console.log(friendUserObject);
 					compileFriendScheds.push(friendUserObject);
 					report();
 				}
-			});
-		}, function () {
-			// Done looping through your following array. Call back with the array of all your friends' schedules.
-			callback(compileFriendScheds);
-		});
-	});
-}
-function acceptFollowRequest (punName, callback) {
-	// Who are your friends? Let's look in your user object and find out, so we can loop through them and pull the scheds!
-	var compileFriendScheds = [];
-	getUserDataByPunName(punName, function (userObject) {
-		utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
-			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
-			getUserDataByPunName(currentFriend, function (friendUserObject) {
-				compileFriendScheds.push(friendUserObject.schedule);
-				report();
 			});
 		}, function () {
 			// Done looping through your following array. Call back with the array of all your friends' schedules.
@@ -235,23 +251,61 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 		socket.emit("refreshResponse", {});
 	});
 
+	// Send Back Friend Scheds & Follow Requests
+	function sendAllDataRefresh (request) {
+		compileFriendScheds(request.asker, function (usersArray) {
+			socket.emit("S2CcompiledFriendScheds", {users: usersArray});
+		});
+		getUserDataByPunName(request.asker, function (userObject) {
+			// TODO - minor - switch from jtay20 requesting to view sched to Jason Tay requesting to view sched
+			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});
+		});
+	}
+
 	// Add User Request
 	socket.on("C2SaddUserRequest", function addUser (request) {
-		debug && console.log("Running CSaddUserRequest");
+		debug && console.log("Running CSaddUserRequest", request);
 		// Add follow request function TODO -- so I can follow multiple people
 		editUserDataByPunName(request.requesting, {followRequests: [request.asker]}, function () {
-			socket.emit("SCaddUserRequestSccessful", {originalRequest: request});
+			socket.emit("S2CaddUserRequestSccessful", {originalRequest: request});
+		});
+	});
+
+	// Accept User Follow Request
+	socket.on("C2SacceptFollowRequest", function acceptFollowRequest (request) {
+		debug && console.log("Running C2SacceptFollowRequest", request);
+		editUserDataByPunNameArray(request.requestGrantedFor, "push", "following", request.requestGrantedBy, function () {
+			editUserDataByPunNameArray(request.requestGrantedBy, "_remove", "followRequests", request.requestGrantedFor, function () {
+				socket.emit("S2CacceptFollowRequestSuccessful", request);
+			});
+		});
+	});
+
+	// Reject User Follow Request
+	socket.on("C2SrejectFollowRequest", function rejectFollowRequest (request) {
+		debug && console.log("Running C2SrejectFollowRequest", request);
+		editUserDataByPunNameArray(request.requestRejectedBy, "_remove", "followRequests", request.requestRejectedFor, function () {
+			socket.emit("S2CrejectFollowRequestSuccessful", request);
+		});
+	});
+
+	// Remove A Friend (Stop Following Your Friend's Schedule)
+	socket.on("C2SremoveMyFriendRequest", function removeMyFriendRequest (request) {
+		debug && console.log("Running C2SremoveMyFriendRequest", request);
+		editUserDataByPunNameArray(request.asker, "_remove", "following", request.requestToRemove, function () {
+			// socket.emit("S2CremoveMyFriendRequestSuccessful", request);
+			sendAllDataRefresh(request);
 		});
 	});
 
 	// Send Back All Schedules You're Following
 	socket.on("C2SsendMyFriendScheds", function sendFriendSchedsToClient (request) {
-		debug && console.log("Running CSsendMyFriendScheds");
-		console.log(request)
-		compileFriendScheds(request.asker, function (schedulesArray) {
-			socket.emit("S2CcompiledFriendScheds", {schedules: schedulesArray});
+		debug && console.log("Running CSsendMyFriendScheds", request);
+		compileFriendScheds(request.asker, function (usersArray) {
+			socket.emit("S2CcompiledFriendScheds", {users: usersArray});
 		});
 		getUserDataByPunName(request.asker, function (userObject) {
+			// TODO - minor - switch from jtay20 requesting to view sched to Jason Tay requesting to view sched
 			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});
 		});
 	});

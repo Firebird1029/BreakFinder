@@ -2,6 +2,7 @@
 
 var debug = true,
 	userProfile = {}, // The profile of the user
+	ignoreFriendScheds = [], // Hide users to display
 	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"},
 	masterSched = [[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
@@ -27,6 +28,28 @@ $("#logout").on("click", function() {
 	$(".loginItems").removeClass("is-hidden");
 	$("#logout").addClass("is-hidden");
 });
+
+// Display Master Sched
+function displayMasterSched () {
+	var text;
+	for (var i = 0; i < masterSched.length; i++) {
+		for (var j = 0; j < masterSched[i].length; j++) {
+			if (masterSched[i][j].length > 0) {
+				// You have friends on this break!
+				text = "";
+				for (var k = 0; k < masterSched[i][j].length; k++) {
+					// These are each friend during this specific break.
+					if (ignoreFriendScheds.indexOf(masterSched[i][j][k]) < 0) {
+						// Show this user to display, since it does not exist in the ignoreFriendScheds array
+						text = text + "\n" + masterSched[i][j][k];
+					}
+				}
+				// TODO -- FIX if all the users on this break are in ignoreFriendScheds
+				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+			}
+		}
+	}
+}
 
 // Socket IO Functions
 var socket = io.connect();
@@ -59,22 +82,29 @@ socket.on("S2CsendBasicUserData", function (userData) {
 // Socket: Server Sent Back All Your Friends' Schedules
 socket.on("S2CcompiledFriendScheds", function (serverData) {
 	debug && console.log("Running SCcompiledFriendScheds");
-	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
-	for (var i = 0; i < serverData.schedules.length; i++) {
-		// debug && console.log(serverData.schedules[i]);
-		for (var m = 0; m < serverData.schedules[i].schedule.length; m++) {
-			for (var n = 0; n < serverData.schedules[i].schedule[m].length; n++) {
-				if (!serverData.schedules[i].schedule[m][n]) {
+	var $temp;
+	// Loop through the array of friends' schedules, then add their name to master schedule if you have that break too
+	for (var i = 0; i < serverData.users.length; i++) {
+		// debug && console.log(serverData.users[i]);
+		// Add Friend i to Sidebar
+		$temp = $("#friendsListTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
+		$temp.data("friendName", serverData.users[i].punName);
+		$temp.find(".friendsListDynamic").data("friendName", serverData.users[i].punName);
+		$temp.find(".friendsListChangeDisplay").bind("click", bindFriendsListChangeDisplay);
+		$temp.find(".removeFriendDynamic").bind("click", bindRemoveFriendDynamic);
+
+		$temp.find("td.friendsListFriendName").text(serverData.users[i].fname + " " + serverData.users[i].lname);
+		$("#friendsListTableBody").append($temp);
+
+		// Friend i's schedule array
+		for (var m = 0; m < serverData.users[i].schedule.length; m++) {
+			for (var n = 0; n < serverData.users[i].schedule[m].length; n++) {
+				if (!serverData.users[i].schedule[m][n]) {
 					// Break! Great! Now let's see if you, the user, also has that break
 					// $("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "red");
-					if (userProfile.schedule[m][n] === serverData.schedules[i].schedule[m][n]) {
+					if (userProfile.schedule[m][n] === serverData.users[i].schedule[m][n]) {
 						//$("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "green").text("Jason");
-						console.log(m, n);
-						console.log(masterSched);
-						console.log(masterSched[m][n]);
-						// var scheduleCell = {color: "green", text:}
-						console.log(serverData.schedules[i].fname);
-						masterSched[m][n].push(serverData.schedules[i].fname)
+						masterSched[m][n].push(serverData.users[i].fname)
 					}
 				}
 			}
@@ -87,12 +117,19 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 socket.on("S2CfollowRequests", function (serverData) {
 	debug && console.log("Running S2CfollowRequests");
 	var $temp;
-	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
-	for (var i = 0; i < serverData.followRequests.length; i++) {
-		$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden");
-		$temp.data("followRequestName", serverData.followRequests[i]);
-		$temp.find("th").text(serverData.followRequests[i]);
-		$("#followRequestTableBody").append($temp);
+
+	if (serverData.followRequests) {
+		// You have follow requests!
+		for (var i = 0; i < serverData.followRequests.length; i++) {
+			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
+			$temp.data("followRequestName", serverData.followRequests[i]);
+			$temp.find(".followRequestDynamic").data("followRequestName", serverData.followRequests[i]);
+			$temp.find(".acceptFollowRequestDynamic").bind("click", bindFollowRequestAcceptClick);
+			$temp.find(".rejectFollowRequestDynamic").bind("click", bindFollowRequestRejectClick);
+
+			$temp.find("th").text(serverData.followRequests[i]);
+			$("#followRequestTableBody").append($temp);
+		}
 	}
 });
 
@@ -101,6 +138,29 @@ $("#addUserButton").click(function() {
 	socket.emit("C2SaddUserRequest", {asker: userProfile.punName, requesting: $("#addUserInput").val()});
 	$("#addUserInput").val("");
 });
+
+// Accept Follow Request Clicked, send message to server
+function bindFollowRequestAcceptClick () {
+	socket.emit("C2SacceptFollowRequest", {requestGrantedFor: $(this).data("followRequestName"), requestGrantedBy: userProfile.punName});
+	$(this).closest("tr").remove();
+}
+
+// Reject Follow Request Clicked
+function bindFollowRequestRejectClick () {
+	socket.emit("C2SrejectFollowRequest", {requestRejectedFor: $(this).data("followRequestName"), requestRejectedBy: userProfile.punName});
+	$(this).closest("tr").remove();
+}
+
+// Change Display of Friend
+function bindFriendsListChangeDisplay () {
+	// Client side only
+}
+
+// Remove Friend That You Are Following (Stop Following Their Schedule)
+function bindRemoveFriendDynamic () {
+	socket.emit("C2SremoveMyFriendRequest", {asker: userProfile.punName, requestToRemove: $(this).data("friendName")});
+	$(this).closest("tr").remove();
+}
 
 // Google Sign-In
 function onSignIn (googleUser) {
@@ -123,18 +183,4 @@ function onSignIn (googleUser) {
 	// Show Our App!
 	$(".initiallyHidden").removeClass("is-invisible");
 	$("#loginSection").addClass("is-hidden");
-}
-
-function displayMasterSched() {
-	for (var i = 0; i < masterSched.length; i++) {
-		for (var j = 0; j < masterSched[i].length; j++) {
-			if (masterSched[i][j].length > 0) {
-				var text = "";
-				for (var k = 0; k < masterSched[i][j].length; k++) {
-					text = text + " " + masterSched[i][j][k]
-				}
-				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
-			}
-		}
-	}
 }

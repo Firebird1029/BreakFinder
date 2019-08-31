@@ -35,22 +35,22 @@ html(lang="en")
 									tbody#followRequestTableBody
 										tr#followRequestTableRowTemplate.is-hidden
 											th bob
-											td: a.acceptFollowRequestDynamic: span.icon: i.far.fa-check
-											td: a.rejectFollowRequestDynamic: span.icon: i.far.fa-times
+											td: a.followRequestDynamic.acceptFollowRequestDynamic: span.icon: i.far.fa-check
+											td: a.followRequestDynamic.rejectFollowRequestDynamic: span.icon: i.far.fa-times
 							hr
 							br
-							#friendsImFollowingList
+							#friendsList
 								table.table(style="width: 100%")
 									thead
 										tr
 											th Display
 											th Friend
 											th
-									tbody
-										tr
-											th: input(type="checkbox")
-											td Bob
-											td: a.removeUserDynamic: span.icon: i.far.fa-times
+									tbody#friendsListTableBody
+										tr#friendsListTableRowTemplate.is-hidden
+											th: input(type="checkbox").friendsListDynamic.friendsListChangeDisplay
+											td.friendsListFriendName.friendsListDynamic
+											td: a.friendsListDynamic.removeFriendDynamic: span.icon: i.far.fa-times
 				.column.initiallyHidden.is-invisible
 					section.section
 						.container.has-text-justified
