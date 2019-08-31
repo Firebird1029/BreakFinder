@@ -2,46 +2,80 @@ doctype html
 html(lang="en")
 	include includes/head.pug
 	body
-		article.article
-			include includes/body.pug
+		#nav(style="background-color: #004B86; height: 85px;")
 			section.section.is-paddingless
 				.container.has-text-centered
-					h1.title.is-1(style="padding-top: 1rem;") BreakFinder
-			section.section
-				.container: .content
-						input.input#punahouUsername.loginItems(type="username")
-						input.input#punahouPassword.loginItems(type="password")
-						.g-signin2.loginItems(data-onsuccess="onSignIn")
-						button#logout.button.is-hidden Logout
-			section.section
-				.container.has-text-justified
-					.content
-						table.table
-							thead
-								tr
-									th Time
-									th A
-									th B
-									th C
-									th D
-									th E
-									th F
-							tbody
-								- var i=1
-								while i <= 32
-									tr
-										th= i
-										td.aCol(class=["mod" + i])
-										td.bCol(class=["mod" + i])
-										td.cCol(class=["mod" + i])
-										td.dCol(class=["mod" + i])
-										td.eCol(class=["mod" + i])
-										td.fCol(class=["mod" + i])
-										- i++
-			section.section
-				input.input#addUserInput
-				button.button#addUserButton Add User
-			section.section#followRequestsDiv
-
+					h1.title.is-1(style="padding-top: 1rem; color: white;") BreakFinder
+		article.article
+			include includes/body.pug
+			.columns
+				.column.is-one-quarter
+					section.section
+						#loginSection
+							input.input#punahouUsername.loginItems(type="username")
+							input.input#punahouPassword.loginItems(type="password")
+							.g-signin2.loginItems(data-onsuccess="onSignIn")
+						#sideBarContainer.initiallyHidden.is-invisible
+							#logoutSection
+								.container: .content
+										button#logout.button Logout
+							hr
+							br
+							#followRequestSection
+								input.input#addUserInput
+								button.button#addUserButton Add User
+							#followRequestsDiv
+								table.table(style="width: 100%")
+									thead
+										tr
+											th Requests
+											th
+											th
+									tbody#followRequestTableBody
+										tr#followRequestTableRowTemplate.is-hidden
+											th bob
+											td: a.acceptFollowRequestDynamic: span.icon: i.far.fa-check
+											td: a.rejectFollowRequestDynamic: span.icon: i.far.fa-times
+							hr
+							br
+							#friendsImFollowingList
+								table.table(style="width: 100%")
+									thead
+										tr
+											th Display
+											th Friend
+											th
+									tbody
+										tr
+											th: input(type="checkbox")
+											td Bob
+											td: a.removeUserDynamic: span.icon: i.far.fa-times
+				.column.initiallyHidden.is-invisible
+					section.section
+						.container.has-text-justified
+							.content
+								table.table
+									thead
+										tr
+											th Time
+											th A
+											th B
+											th C
+											th D
+											th E
+											th F
+									tbody
+										- var i=1
+										- var modTimeConversion = {1: "7:30", 2: "7:45", 3: "8:00", 4: "8:15", 5: "8:30", 6: "8:45", 7: "9:00", 8: "9:15", 9: "9:30", 10: "9:45", 11: "10:00", 12: "10:15", 13: "10:30", 14: "10:45", 15: "11:00", 16: "11:15", 17: "11:30", 18: "11:45", 19: "12:00", 20: "12:15", 21: "12:30", 22: "12:45", 23: "1:00", 24: "1:15", 25: "1:30", 26: "1:45", 27: "2:00", 28: "2:15", 29: "2:30", 30: "2:45", 31: "3:00", 32: "3:15"}
+										while i <= 32
+											tr
+												th= modTimeConversion[i]
+												td.aCol(class=["mod" + i])
+												td.bCol(class=["mod" + i])
+												td.cCol(class=["mod" + i])
+												td.dCol(class=["mod" + i])
+												td.eCol(class=["mod" + i])
+												td.fCol(class=["mod" + i])
+												- i++
 		//- Footer
 		include includes/footer.pug

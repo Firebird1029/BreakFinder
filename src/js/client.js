@@ -73,9 +73,13 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 // Socket: Server Sent Back Your Follow Requests (the people who want to follow your schedule)
 socket.on("S2CfollowRequests", function (serverData) {
 	debug && console.log("Running S2CfollowRequests");
+	var $temp;
 	// Loop through the array of friends' schedules, then add it to the DOM if you have that break too
 	for (var i = 0; i < serverData.followRequests.length; i++) {
-		$("#followRequestsDiv").append(serverData.followRequests[i]);
+		$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden");
+		$temp.data("followRequestName", serverData.followRequests[i]);
+		$temp.find("th").text(serverData.followRequests[i]);
+		$("#followRequestTableBody").append($temp);
 	}
 });
 
@@ -97,10 +101,12 @@ function onSignIn (googleUser) {
 	console.log("Email: " + profile.getEmail()); // This is null if the 'email' scope is not present.
 	var id_token = googleUser.getAuthResponse().id_token;
 
-	// Our Code
+	// Socket Code
 	socket.emit("idToken", {idToken: id_token, username: $("#punahouUsername").val(), password: $("#punahouPassword").val()});
 	$("#punahouUsername").val("");
 	$("#punahouPassword").val("");
-	$(".loginItems").addClass("is-hidden");
-	$("#logout").removeClass("is-hidden");
+
+	// Show Our App!
+	$(".initiallyHidden").removeClass("is-invisible");
+	$("#loginSection").addClass("is-hidden");
 }
