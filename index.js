@@ -226,22 +226,29 @@ function getStudentData (username, password, callback) {
 
 // User Manipulation Functions
 function compileFriendScheds (punName, callback) {
+	debug && console.log("Running compileFriendScheds", punName);
 	// Who are your friends? Let's look in your user object and find out, so we can loop through them and pull the scheds!
 	var compileFriendScheds = [];
 	getUserDataByPunName(punName, function (userObject) {
-		utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
-			// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
-			getUserDataByPunName(currentFriend, function (friendUserObject) {
-				if (friendUserObject) {
-					// debug && console.log(friendUserObject);
-					compileFriendScheds.push(friendUserObject);
-					report();
-				}
+		if (userObject.following.length) {
+			// You are following your friends' schedules!
+			utils.waterfallOverArray(userObject.following, function (currentFriend, report) {
+				// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
+				getUserDataByPunName(currentFriend, function (friendUserObject) {
+					if (friendUserObject) {
+						// debug && console.log(friendUserObject);
+						compileFriendScheds.push(friendUserObject);
+						report();
+					}
+				});
+			}, function () {
+				// Done looping through your following array. Call back with the array of all your friends' schedules.
+				callback(compileFriendScheds);
 			});
-		}, function () {
-			// Done looping through your following array. Call back with the array of all your friends' schedules.
-			callback(compileFriendScheds);
-		});
+		} else {
+			// You are not following anyone yet!
+			callback(compileFriendScheds); // If userObject.following is empty, utils.waterfall will not run.
+		}
 	});
 }
 
@@ -255,10 +262,12 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	function sendAllDataRefresh (request) {
 		compileFriendScheds(request.asker, function (usersArray) {
 			socket.emit("S2CcompiledFriendScheds", {users: usersArray});
+			console.log("Sent compiled friend schedules.")
 		});
 		getUserDataByPunName(request.asker, function (userObject) {
 			// TODO - minor - switch from jtay20 requesting to view sched to Jason Tay requesting to view sched
 			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});
+			console.log("Sent follow requests.")
 		});
 	}
 
@@ -293,17 +302,19 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	socket.on("C2SremoveMyFriendRequest", function removeMyFriendRequest (request) {
 		debug && console.log("Running C2SremoveMyFriendRequest", request);
 		editUserDataByPunNameArray(request.asker, "_remove", "following", request.requestToRemove, function () {
-			// socket.emit("S2CremoveMyFriendRequestSuccessful", request);
-			sendAllDataRefresh(request);
+			socket.emit("S2CremoveMyFriendRequestSuccessful", request);
+			// sendAllDataRefresh(request);
 		});
 	});
 
 	// Send Back All Schedules You're Following
 	socket.on("C2SsendMyFriendScheds", function sendFriendSchedsToClient (request) {
-		debug && console.log("Running CSsendMyFriendScheds", request);
+		debug && console.log("Running C2SsendMyFriendScheds", request);
 		compileFriendScheds(request.asker, function (usersArray) {
 			socket.emit("S2CcompiledFriendScheds", {users: usersArray});
 		});
+	});
+	socket.on("C2SsendMyFollowRequests", function sendMyFollowRequests (request) {
 		getUserDataByPunName(request.asker, function (userObject) {
 			// TODO - minor - switch from jtay20 requesting to view sched to Jason Tay requesting to view sched
 			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});

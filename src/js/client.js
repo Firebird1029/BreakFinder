@@ -4,12 +4,14 @@ var debug = true,
 	userProfile = {}, // The profile of the user
 	ignoreFriendScheds = [], // Hide users to display
 	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"},
-	masterSched = [[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
+	masterSchedLayout = [[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]];
+
+var masterSched = _.cloneDeep(masterSchedLayout); // To reset masterSched quickly.
 
 // Navbar Burger
 $(document).ready(function () {
@@ -29,23 +31,36 @@ $("#logout").on("click", function() {
 	$("#logout").addClass("is-hidden");
 });
 
-// Display Master Sched
-function displayMasterSched () {
-	var text;
+// Reset Master Schedule DOM
+function resetMasterSched () {
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
+			$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "").text("");
+		}
+	}
+}
+
+// Display Master Sched
+function displayMasterSched () {
+	resetMasterSched();
+	var text, numberOfFriendsOnBreak;
+	for (var i = 0; i < masterSched.length; i++) {
+		for (var j = 0; j < masterSched[i].length; j++) {
+			numberOfFriendsOnBreak = 0;
 			if (masterSched[i][j].length > 0) {
 				// You have friends on this break!
 				text = "";
 				for (var k = 0; k < masterSched[i][j].length; k++) {
 					// These are each friend during this specific break.
-					if (ignoreFriendScheds.indexOf(masterSched[i][j][k]) < 0) {
+					if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
 						// Show this user to display, since it does not exist in the ignoreFriendScheds array
-						text = text + "\n" + masterSched[i][j][k];
+						text = text + "\n" + masterSched[i][j][k].fname;
+						numberOfFriendsOnBreak++;
 					}
 				}
-				// TODO -- FIX if all the users on this break are in ignoreFriendScheds
-				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+				if (numberOfFriendsOnBreak > 0) {
+					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+				}
 			}
 		}
 	}
@@ -67,23 +82,26 @@ socket.on("S2CsendBasicUserData", function (userData) {
 	debug && console.log("Running S2CsendBasicUserData");
 	// TODO -- why so much back & forth
 	socket.emit("C2SsendMyFriendScheds", {asker: userProfile.punName});
-	debug && console.log(userData);
+	socket.emit("C2SsendMyFollowRequests", {asker: userProfile.punName});
+	// debug && console.log(userData);
 	userProfile.schedule = userData.schedule;
-	for (var i = 0; i < userData.schedule.length; i++) {
+	/*for (var i = 0; i < userData.schedule.length; i++) {
 		for (var j = 0; j < userData.schedule[i].length; j++) {
 			if (!userData.schedule[i][j]) {
 				// Break!
 				// $("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "blue");
 			}
 		}
-	}
+	}*/
 });
 
 // Socket: Server Sent Back All Your Friends' Schedules
 socket.on("S2CcompiledFriendScheds", function (serverData) {
 	debug && console.log("Running SCcompiledFriendScheds");
+	$("#friendsListTableBody").children().not("tr:first").remove();
 	var $temp;
 	// Loop through the array of friends' schedules, then add their name to master schedule if you have that break too
+	masterSched = _.cloneDeep(masterSchedLayout); // IMPORTANT! Reset masterSched
 	for (var i = 0; i < serverData.users.length; i++) {
 		// debug && console.log(serverData.users[i]);
 		// Add Friend i to Sidebar
@@ -104,7 +122,7 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 					// $("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "red");
 					if (userProfile.schedule[m][n] === serverData.users[i].schedule[m][n]) {
 						//$("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "green").text("Jason");
-						masterSched[m][n].push(serverData.users[i].fname)
+						masterSched[m][n].push({punName: serverData.users[i].punName, fname: serverData.users[i].fname, lname: serverData.users[i].lname})
 					}
 				}
 			}
@@ -116,6 +134,7 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 // Socket: Server Sent Back Your Follow Requests (the people who want to follow your schedule)
 socket.on("S2CfollowRequests", function (serverData) {
 	debug && console.log("Running S2CfollowRequests");
+	$("#followRequestTableBody").children().not("tr:first").remove();
 	var $temp;
 
 	if (serverData.followRequests) {
@@ -131,6 +150,11 @@ socket.on("S2CfollowRequests", function (serverData) {
 			$("#followRequestTableBody").append($temp);
 		}
 	}
+});
+
+// Socket: When Friend is Removed, Send Back a Request to Update Friend Schedule
+socket.on("S2CremoveMyFriendRequestSuccessful", function () {
+	socket.emit("C2SsendMyFriendScheds", {asker: userProfile.punName});
 });
 
 // Add User Button Clicked, send message to server
