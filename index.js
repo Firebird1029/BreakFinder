@@ -161,16 +161,8 @@ function getDataFromTable(html, val, callback) {
 	callback(data);
 }
 
-/* Pull student schedule from myBackpack using the username and password to login
- * The studentNum is the student's id number, which is used to select the correct schedule
-*/
-function getStudentData (username, password, callback) {
+function extractDataFromTable(callback) {
 	nightmare
-		.goto('https://mybackpack.punahou.edu/SeniorApps/facelets/registration/loginCenter.xhtml')
-		.wait('body')
-		.type('input[id = "form:userId"]', username)
-		.type('input[id = "form:userPassword"]', password)
-		.click('input[name="form:signIn"]')
 		.wait("a[href='https://mybackpack.punahou.edu/SeniorApps/studentParent/schedule.faces?selectedMenuId=true']")
 		.click("a[href='https://mybackpack.punahou.edu/SeniorApps/studentParent/schedule.faces?selectedMenuId=true']")
 		.wait("select")
@@ -185,7 +177,7 @@ function getStudentData (username, password, callback) {
 			nightmare
 				.wait(500)
 				.select('select', value)
-				.wait(2000)
+				.wait(1000)
 				.evaluate(function(){
 					if (document.querySelector("input.chartButtonUp") === null) {
 						return false;
@@ -217,10 +209,39 @@ function getStudentData (username, password, callback) {
 				.catch(error => {
 					console.error("Error: ", error);
 				})
+			})
+}
+
+/* Pull student schedule from myBackpack using the username and password to login
+ * The studentNum is the student's id number, which is used to select the correct schedule
+*/
+function getStudentData (username, password, callback) {
+	nightmare = Nightmare({show: false});
+	nightmare
+		.goto('https://mybackpack.punahou.edu/SeniorApps/facelets/registration/loginCenter.xhtml')
+		.wait('body')
+		.type('input[id = "form:userId"]', username)
+		.type('input[id = "form:userPassword"]', password)
+		.click('input[name="form:signIn"]')
+		.wait(2000)
+		.evaluate(function() {
+			if (document.getElementById("form:errorMsgs") == null) {
+				return true;
+			} else {
+				return false;
+			}
+		})
+		.then(loggedIn => {
+			if (loggedIn) {
+				extractDataFromTable(callback);
+			} else {
+				// Failed login
+				callback("failedLogin");
+			}
+			
 		})
 		.catch(error => {
-			console.error("Search failed: ", error);
-			// Failed login or something wrong
+			console.error("Error: ", error);
 		});
 }
 
@@ -321,6 +342,17 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 		});
 	});
 
+	socket.on("nightmareLogin", function myBackpackLogin (request) {
+		getStudentData(request.username, request.password, function(studentData) {
+			if (studentData == "failedLogin") {
+				socket.emit("failedLogin");
+			} else {
+				console.log(studentData);
+				socket.emit("successfulLogin", studentData);
+			}
+		})
+	});
+
 	// Google Sign-In
 	socket.on("idToken", function processGoogleIDToken (options) {
 		var userid;
@@ -342,13 +374,13 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 				// TODO: Move this to client-side code
 				// TODO: run nightmare for new users only
 				// Username & password both exist --> new user (although username/password might be wrong)
-				getStudentData(options.username, options.password, function (studentData) {
-					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: studentData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {
-					 	getUserData(payload.sub, function (userData) {
- 							socket.emit("S2CsendBasicUserData", userData);
-	 					});
-					 });
-				});
+				
+				 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: options.nightmareData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {
+				 	getUserData(payload.sub, function (userData) {
+							socket.emit("S2CsendBasicUserData", userData);
+						});
+				 });
+
 			} else {
 				// Username and/or password missing --> check if user exists or not
 				getUserData(payload.sub, function (userData) {
