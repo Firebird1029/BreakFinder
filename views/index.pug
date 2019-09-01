@@ -36,12 +36,14 @@ html(lang="en")
 							#logoutSection
 								.container: .content
 										button#logout.button Logout
-							hr
-							br
+								hr
+								br
 							#followRequestSection
 								input.input#addUserInput
 								button.button#addUserButton Send Request
-							#followRequestsDiv
+								hr
+								br
+							#followRequestsDiv.is-hidden
 								table.table(style="width: 100%")
 									thead
 										tr
@@ -53,8 +55,8 @@ html(lang="en")
 											th bob
 											td: a.followRequestDynamic.acceptFollowRequestDynamic: span.icon: i.far.fa-check
 											td: a.followRequestDynamic.rejectFollowRequestDynamic: span.icon: i.far.fa-times
-							hr
-							br
+								hr
+								br
 							#friendsList
 								table.table(style="width: 100%")
 									thead

@@ -184,8 +184,9 @@ socket.on("S2CfollowRequests", function (serverData) {
 	$("#followRequestTableBody").children().not("tr:first").remove();
 	var $temp;
 
-	if (serverData.followRequests) {
+	if (serverData.followRequests.length) {
 		// You have follow requests!
+		$("#followRequestsDiv").removeClass("is-hidden");
 		for (var i = 0; i < serverData.followRequests.length; i++) {
 			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
 			$temp.data("followRequestName", serverData.followRequests[i]);
