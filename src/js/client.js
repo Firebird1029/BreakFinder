@@ -318,7 +318,7 @@ socket.on("loginUserDoesNotExist", function () {
 
 $punNewAccBtn.click(function () {
 	$("#failMessage").addClass("is-invisible");
-	$("#punahouUsername #punahouPassword #punahouCreateAccount").attr("disabled", true);
+	$("#punahouUsername, #punahouPassword, #punahouCreateAccount").attr("disabled", true);
 	// $punPassword.attr("disabled", true);
 	// $punNewAccBtn.attr("disabled", true);
 	socket.emit("nightmareLogin", {username: $punUsername.val(), password: $punPassword.val()});

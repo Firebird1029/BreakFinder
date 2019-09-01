@@ -195,7 +195,7 @@ function extractDataFromTable(callback) {
 						.evaluate(() => document.body.innerHTML)
 						.then(response => {
 							getDataFromTable(response, value, function(data) {
-								debug && console.log(data);
+								// debug && console.log(data);
 								nightmare.end();
 								callback(data);
 							});
@@ -256,7 +256,6 @@ function compileFriendScheds (punName, callback) {
 				// So these are your friends, one by one. Let's look inside THEIR user object and record their schedule.
 				getUserDataByPunName(currentFriend, function (friendUserObject) {
 					if (friendUserObject) {
-						// debug && console.log(friendUserObject);
 						compileFriendScheds.push(friendUserObject);
 						report();
 					}
