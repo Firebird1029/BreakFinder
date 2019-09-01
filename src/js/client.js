@@ -72,7 +72,7 @@ function displayMasterSched () {
 				}
 				if (numberOfFriendsOnBreak > 0) {
 					// .text(text) or .text("" + numberOfFriendsOnBreak + " friends")
-					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text("" + numberOfFriendsOnBreak + " friends");
+					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
 					// https://stackoverflow.com/questions/2151084/map-a-2d-array-onto-a-1d-array
 					tippyInstances[i+(6*j)].setContent(listOfFriends.join("<br>"));
 					tippyInstances[i+(6*j)].enable();
@@ -255,7 +255,7 @@ socket.on("failedLogin", function() {
 	$("#punahouLogin").removeAttr("disabled");
 	$("#punahouUsername").removeAttr("disabled");
 	$("#punahouPassword").removeAttr("disabled");
-})
+});
 
 socket.on("successfulLogin", function(studentData) {
 	$("#punahouUsername").addClass("is-invisible");
@@ -264,18 +264,4 @@ socket.on("successfulLogin", function(studentData) {
 	$(".g-signin2").removeClass("is-invisible");
 	$("#failMessage").addClass("is-invisible");
 	userProfile.nightmareData = studentData;
-})
-
-function displayMasterSched() {
-	for (var i = 0; i < masterSched.length; i++) {
-		for (var j = 0; j < masterSched[i].length; j++) {
-			if (masterSched[i][j].length > 0) {
-				var text = "";
-				for (var k = 0; k < masterSched[i][j].length; k++) {
-					text = text + " " + masterSched[i][j][k]
-				}
-				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
-			}
-		}
-	}
-}
+});
