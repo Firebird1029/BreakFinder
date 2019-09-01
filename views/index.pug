@@ -71,12 +71,12 @@ html(lang="en")
 									while i <= 32
 										tr
 											th= modTimeConversion[i]
-											td.aCol(class=["mod" + i])
-											td.bCol(class=["mod" + i])
-											td.cCol(class=["mod" + i])
-											td.dCol(class=["mod" + i])
-											td.eCol(class=["mod" + i])
-											td.fCol(class=["mod" + i])
+											td.schedMod.is-unselectable.aCol(class=["mod" + i])
+											td.schedMod.is-unselectable.bCol(class=["mod" + i])
+											td.schedMod.is-unselectable.cCol(class=["mod" + i])
+											td.schedMod.is-unselectable.dCol(class=["mod" + i])
+											td.schedMod.is-unselectable.eCol(class=["mod" + i])
+											td.schedMod.is-unselectable.fCol(class=["mod" + i])
 											- i++
 		//- Footer
 		include includes/footer.pug

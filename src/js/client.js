@@ -21,14 +21,24 @@ $(document).ready(function () {
 	});
 });
 
+// Tippies
+var tippyInstances = tippy(".schedMod", {
+	placement: "left",
+	theme: "punahou",
+	followCursor: "vertical",
+	content: "bob"
+});
+tippy.group(tippyInstances, {
+	delay: [200, 100] // if the instances don't specify a `delay`
+});
+
 // On logout, change DOM
 $("#logout").on("click", function() {
 	var auth2 = gapi.auth2.getAuthInstance();
 	auth2.signOut().then(function () {
-		// console.log("User signed out.");
+		debug && console.log("User signed out.");
+		window.location.reload(false);
 	});
-	$(".loginItems").removeClass("is-hidden");
-	$("#logout").addClass("is-hidden");
 });
 
 // Reset Master Schedule DOM
@@ -36,6 +46,7 @@ function resetMasterSched () {
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
 			$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "").text("");
+			tippyInstances[i+(6*j)].disable();
 		}
 	}
 }
@@ -43,23 +54,28 @@ function resetMasterSched () {
 // Display Master Sched
 function displayMasterSched () {
 	resetMasterSched();
-	var text, numberOfFriendsOnBreak;
+	var text, numberOfFriendsOnBreak, listOfFriends = [];
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
 			numberOfFriendsOnBreak = 0;
 			if (masterSched[i][j].length > 0) {
 				// You have friends on this break!
-				text = "";
+				text = ""; listOfFriends = [];
 				for (var k = 0; k < masterSched[i][j].length; k++) {
 					// These are each friend during this specific break.
 					if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
 						// Show this user to display, since it does not exist in the ignoreFriendScheds array
-						text = text + "\n" + masterSched[i][j][k].fname;
+						text = text + masterSched[i][j][k].fname;
+						listOfFriends.push(masterSched[i][j][k].fname);
 						numberOfFriendsOnBreak++;
 					}
 				}
 				if (numberOfFriendsOnBreak > 0) {
-					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+					// .text(text) or .text("" + numberOfFriendsOnBreak + " friends")
+					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text("" + numberOfFriendsOnBreak + " friends");
+					// https://stackoverflow.com/questions/2151084/map-a-2d-array-onto-a-1d-array
+					tippyInstances[i+(6*j)].setContent(listOfFriends.join("<br>"));
+					tippyInstances[i+(6*j)].enable();
 				}
 			}
 		}
@@ -178,6 +194,19 @@ function bindFollowRequestRejectClick () {
 // Change Display of Friend
 function bindFriendsListChangeDisplay () {
 	// Client side only
+	var friendName = $(this).data("friendName");
+	if ($(this).prop("checked")) {
+		// User just checked display ON
+		if (ignoreFriendScheds.indexOf(friendName) > -1) {
+			ignoreFriendScheds.splice(ignoreFriendScheds.indexOf(friendName), 1);
+		}
+	} else {
+		// User just checked display OFF
+		if (ignoreFriendScheds.indexOf(friendName) < 0) {
+			ignoreFriendScheds.push(friendName);
+		}
+	}
+	displayMasterSched();
 }
 
 // Remove Friend That You Are Following (Stop Following Their Schedule)

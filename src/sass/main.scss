@@ -11,3 +11,21 @@ body {
 .is-1 {
 	font-family: "proxima_novabold", Arial;
 }
+
+.schedMod {
+	font-size: 0.8rem;
+	cursor: default;
+}
+
+.tippy-tooltip.punahou-theme {
+  background-color: $primary;
+  color: white;
+}
+
+.tippy-tooltip.punahou-theme[data-animatefill] {
+  background-color: transparent;
+}
+
+.tippy-tooltip.punahou-theme .tippy-backdrop {
+  background-color: $primary;
+}
