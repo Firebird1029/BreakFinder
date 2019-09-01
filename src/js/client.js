@@ -1,6 +1,34 @@
 "use strict"; /* eslint-env browser */ /* global */ /* eslint no-warning-comments: [1, { "terms": ["todo", "fix", "help"], "location": "anywhere" }] */
 
+$.fn.extend({
+	animateCss: function(animationName, callback) {
+		var animationEnd = (function(el) {
+			var animations = {
+				animation: "animationend",
+				OAnimation: "oAnimationEnd",
+				MozAnimation: "mozAnimationEnd",
+				WebkitAnimation: "webkitAnimationEnd",
+			};
+
+			for (var t in animations) {
+				if (el.style[t] !== undefined) {
+					return animations[t];
+				}
+			}
+		})(document.createElement("div"));
+
+		this.addClass("animated " + animationName).one(animationEnd, function() { 
+			$(this).removeClass("animated " + animationName);
+
+			if (typeof callback === "function") callback();
+		});
+	
+		return this;
+	},
+});
+
 var debug = true,
+	loggedIn = false,
 	userProfile = {}, // The profile of the user
 	ignoreFriendScheds = [], // Hide users to display
 	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"},
@@ -22,15 +50,18 @@ $(document).ready(function () {
 });
 
 // Tippies
-var tippyInstances = tippy(".schedMod", {
-	placement: "left",
-	theme: "punahou",
-	followCursor: "vertical",
-	content: "bob"
-});
-tippy.group(tippyInstances, {
-	delay: [200, 100] // if the instances don't specify a `delay`
-});
+var tippyInstances;
+function createTippies () {
+	tippyInstances = tippy(".schedMod", {
+		placement: "left",
+		theme: "punahou",
+		followCursor: "vertical",
+		content: ""
+	});
+	tippy.group(tippyInstances, {
+		delay: [200, 100] // if the instances don't specify a `delay`
+	});
+}
 
 // On logout, change DOM
 $("#logout").on("click", function() {
@@ -217,6 +248,9 @@ function bindRemoveFriendDynamic () {
 
 // Google Sign-In
 function onSignIn (googleUser) {
+	loggedIn = true;
+	$("#pageLoaded").addClass("is-hidden");
+
 	// Google Code
 	var profile = googleUser.getBasicProfile();
 	userProfile.googleProfile = profile;
@@ -234,34 +268,77 @@ function onSignIn (googleUser) {
 	$("#punahouPassword").val("");
 
 	// Show Our App!
-	$(".initiallyHidden").removeClass("is-invisible");
+	$(".initiallyHidden").removeClass("is-hidden");
 	$("#loginSection").addClass("is-hidden");
+	$("footer.footer").removeClass("is-hidden");
+	createTippies();
 }
 
-$("#punahouLogin").click(function() {
-	socket.emit("nightmareLogin", {username: $("#punahouUsername").val(), password: $("#punahouPassword").val()});
-	$("#failMessage").addClass("is-invisible");
-	$("#punahouUsername").val("");
-	$("#punahouPassword").val("");
+// Login Code
+var $punUsername = $("#punahouUsername"),
+	$punPassword = $("#punahouPassword"),
+	$punNewAccBtn = $("#punahouCreateAccount"),
+	$gSignin = $(".g-signin2");
 
-	$("#punahouLogin").attr("disabled", "true");
-	$("#punahouUsername").attr("disabled", "true");
-	$("#punahouPassword").attr("disabled", "true");
+setTimeout(function () {
+	if (!loggedIn) {
+		$(".startLoginField").animateCss("fadeIn").removeClass("is-invisible");
+	}
+	$("#pageLoaded").addClass("is-hidden");
+}, 1500);
+
+$punUsername.on("keyup", function (event) {
+	if(event.which === 13 || event.keyCode === 13) {
+		$punUsername.attr("disabled", true);
+		socket.emit("loginCheckIfUserExists", {punName: $punUsername.val()});
+		$("#usernameCheckLoading").removeClass("is-invisible");
+	}
+});
+$punPassword.on("keyup", function (event) {
+	if(event.which === 13 || event.keyCode === 13) {
+		$punNewAccBtn.click();
+	}
 });
 
+socket.on("loginUserExists", function () {
+	// Show Google Sign-In Button
+	$("#usernameCheckLoading").addClass("is-invisible");
+	$("#loginTopSection").animateCss("fadeOut", function () {
+		$("#loginTopSection").addClass("is-hidden");
+		$("#welcomeBackMsg").animateCss("fadeIn").removeClass("is-invisible");
+		$gSignin.animateCss("fadeIn").removeClass("is-invisible");
+	});
+});
+
+socket.on("loginUserDoesNotExist", function () {
+	$("#usernameCheckLoading").addClass("is-invisible");
+	$punPassword.animateCss("fadeIn").removeClass("is-invisible");
+	$punNewAccBtn.animateCss("fadeIn").removeClass("is-invisible");
+});
+
+$punNewAccBtn.click(function () {
+	$("#failMessage").addClass("is-invisible");
+	$("#punahouUsername #punahouPassword #punahouCreateAccount").attr("disabled", true);
+	// $punPassword.attr("disabled", true);
+	// $punNewAccBtn.attr("disabled", true);
+	socket.emit("nightmareLogin", {username: $punUsername.val(), password: $punPassword.val()});
+	$("#usernameCheckLoading").removeClass("is-invisible");
+});
 
 socket.on("failedLogin", function() {
-	$("#failMessage").removeClass("is-invisible");
-	$("#punahouLogin").removeAttr("disabled");
-	$("#punahouUsername").removeAttr("disabled");
-	$("#punahouPassword").removeAttr("disabled");
+	$("#startMessage").addClass("is-invisible");
+	$("#failMessage").animateCss("fadeIn").removeClass("is-invisible");
+	$punPassword.removeAttr("disabled");
+	$punNewAccBtn.removeAttr("disabled");
+	$("#usernameCheckLoading").addClass("is-invisible");
 });
 
 socket.on("successfulLogin", function(studentData) {
-	$("#punahouUsername").addClass("is-invisible");
-	$("#punahouPassword").addClass("is-invisible");
-	$("#punahouLogin").addClass("is-invisible");
-	$(".g-signin2").removeClass("is-invisible");
-	$("#failMessage").addClass("is-invisible");
 	userProfile.nightmareData = studentData;
+	$("#usernameCheckLoading").addClass("is-invisible");
+	$("#loginTopSection").animateCss("fadeOut", function () {
+		$("#loginTopSection").addClass("is-hidden");
+		$("#welcomeBackMsg").text("Final step! Link your Google account to get started.").animateCss("fadeIn").removeClass("is-invisible");
+		$gSignin.animateCss("fadeIn").removeClass("is-invisible");
+	});
 });

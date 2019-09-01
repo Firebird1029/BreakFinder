@@ -5,8 +5,7 @@ var debug = true;
  * Notes
  *
  * TODO
- * Make code async -- so 2 ppl can run at same time
- * Make loading symbol for after they type in password and waiting for nightmare
+ * When you have no friends yet, show message to add friends
  * Comment EVERYTHING
  *
  * Resources:
@@ -215,7 +214,7 @@ function extractDataFromTable(callback) {
 /* Pull student schedule from myBackpack using the username and password to login
  * The studentNum is the student's id number, which is used to select the correct schedule
 */
-function getStudentData (username, password, callback) {
+function getStudentDataViaNightmare (username, password, callback) {
 	nightmare = Nightmare({show: false});
 	nightmare
 		.goto('https://mybackpack.punahou.edu/SeniorApps/facelets/registration/loginCenter.xhtml')
@@ -343,14 +342,32 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	});
 
 	socket.on("nightmareLogin", function myBackpackLogin (request) {
-		getStudentData(request.username, request.password, function(studentData) {
-			if (studentData == "failedLogin") {
+		debug && console.log("Running nightmareLogin", request);
+		getStudentDataViaNightmare(request.username, request.password, function(studentData) {
+			if (studentData === "failedLogin") {
+				// Login failed -- username & password don't match
+				debug && console.log("Nightmare login failed.");
 				socket.emit("failedLogin");
 			} else {
-				console.log(studentData);
+				// Login successful -- pulled schedule
+				debug && console.log("Nightmare login successful!");
 				socket.emit("successfulLogin", studentData);
 			}
 		})
+	});
+
+	// Login Functions
+	socket.on("loginCheckIfUserExists", function loginCheckIfUserExists (request) {
+		debug && console.log("Running loginCheckIfUserExists", request);
+		getUserDataByPunName(request.punName, function (userObject) {
+			if (userObject) {
+				// User exists in data.json, returning user
+				socket.emit("loginUserExists");
+			} else {
+				// User doesn't exist in data.json, new user
+				socket.emit("loginUserDoesNotExist");
+			}
+		});
 	});
 
 	// Google Sign-In
@@ -371,8 +388,6 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 			
 			// After Google Verification Process
 			if (options.username && options.password) {
-				// TODO: Move this to client-side code
-				// TODO: run nightmare for new users only
 				// Username & password both exist --> new user (although username/password might be wrong)
 				
 				 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: options.nightmareData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {

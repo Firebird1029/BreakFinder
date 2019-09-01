@@ -8,19 +8,31 @@ html(lang="en")
 				section.section.is-paddingless
 					.container.has-text-centered
 						h1.title.is-1(style="padding-top: 1rem; color: white;") BreakFinder
-			section#loginSection.hero.is-fullheight
+			section#loginSection.hero.is-medium
 				.hero-body
 					.container: .has-text-centered
-						#failMessage.is-invisible Failed Login. Please try again.
-						input.input#punahouUsername.loginItems(type="username")
-						input.input#punahouPassword.loginItems(type="password")
-						button.button#punahouLogin.loginItems Login
-						.g-signin2.loginItems.is-invisible(data-onsuccess="onSignIn")
+						#loginTopSection
+							span#pageLoaded.icon: i.fas.fa-spinner.fa-pulse
+							p#startMessage.startLoginField.is-invisible Enter your Punapps username here:
+							p#failMessage.is-invisible Failed Login. Please try again.
+							input.input#punahouUsername.startLoginField.is-invisible(type="username", style="width: 40%", placeholder="i.e. jdoe19")
+							br
+							br
+							input.input#punahouPassword.is-invisible(type="password", style="width: 40%", placeholder="Punapps Password")
+							br
+							br
+							button.button#punahouCreateAccount.is-invisible Login via Punapps
+							br
+							br
+							span#usernameCheckLoading.icon.is-invisible: i.fas.fa-spinner.fa-pulse
+						#loginBottomSection
+							p#welcomeBackMsg.is-invisible Welcome back.
+							br
+							.g-signin2.is-invisible(data-onsuccess="onSignIn", style="display: inline-block")
 			.columns
 				.column.is-one-quarter
 					section.section
-						//- 
-						#sideBarContainer.initiallyHidden.is-invisible
+						#sideBarContainer.initiallyHidden.is-hidden
 							#logoutSection
 								.container: .content
 										button#logout.button Logout
@@ -55,7 +67,7 @@ html(lang="en")
 											th: input(type="checkbox", checked).friendsListDynamic.friendsListChangeDisplay
 											td.friendsListFriendName.friendsListDynamic
 											td: a.friendsListDynamic.removeFriendDynamic: span.icon: i.far.fa-times
-				.column.initiallyHidden.is-invisible
+				.column.initiallyHidden.is-hidden
 					section.section
 						.container.has-text-justified
 							.content
