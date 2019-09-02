@@ -34,7 +34,7 @@ html(lang="en")
 					section.section
 						#sideBarContainer.initiallyHidden.is-hidden(style="max-height: 44rem; overflow-y: scroll;")
 							#followRequestsDiv
-								table.table(style="width: 100%")
+								table.table.is-hoverable(style="width: 100%")
 									thead
 										tr
 											th
@@ -43,24 +43,26 @@ html(lang="en")
 											th
 											td: em: span#followRequestsCount
 									tbody#followRequestTableBody
-										tr#followRequestTableRowTemplate.is-hidden
-											th bob
-											td: a.followRequestDynamic.acceptFollowRequestDynamic: span.icon: i.far.fa-check
-											td: a.followRequestDynamic.rejectFollowRequestDynamic: span.icon: i.far.fa-times
+										tr#followRequestTableRowTemplate.is-hidden.followRequestTableRow
+											th.followRequestDynamic bob
+											td: a.followRequestDynamic.followRequestDynamicBtn.acceptFollowRequestDynamic.is-invisible: span.icon: i.far.fa-check
+											td: a.followRequestDynamic.followRequestDynamicBtn.rejectFollowRequestDynamic.is-invisible: span.icon: i.far.fa-times
 								hr
 								br
 							#friendsList
-								table.table(style="width: 100%")
+								table.table.is-hoverable(style="width: 100%")
 									thead
 										tr
 											th Display
 											th Friend
 											th
+											th
 									tbody#friendsListTableBody
 										tr#friendsListTableRowTemplate.is-hidden
 											th: input(type="checkbox", checked).friendsListDynamic.friendsListChangeDisplay
 											td.friendsListFriendName.friendsListDynamic
-											td: a.friendsListDynamic.removeFriendDynamic: span.icon: i.far.fa-times
+											td: a.friendsListDynamic.friendsListDynamicBtn.soloFriendDynamic.is-invisible: span.icon: i.far.fa-star.soloFriendButton
+											td: a.friendsListDynamic.friendsListDynamicBtn.removeFriendDynamic.is-invisible: span.icon: i.far.fa-times
 								hr
 								br
 							#followRequestSection

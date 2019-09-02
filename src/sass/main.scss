@@ -1,6 +1,7 @@
 // Override Bulma vars here. Use https://bulma.io/documentation/overview/colors/, not Bulma vars.
 // $primary: hsl(217, 71%, 53%);
-$primary: #004B86;
+$link: #004B86;
+$primary: $link;
 @import "./node_modules/bulma/bulma.sass";
 // @import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro");
 
