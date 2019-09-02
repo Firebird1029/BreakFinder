@@ -31,6 +31,7 @@ var debug = true,
 	loggedIn = false,
 	userProfile = {}, // The profile of the user
 	ignoreFriendScheds = [], // Hide users to display
+	oneUserSoloTrack = "", // Only show breaks of one user, like a solo track on GarageBand
 	conversionTable = {0: "a", 1: "b", 2: "c", 3: "d", 4: "e", 5: "f"},
 	masterSchedLayout = [[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
 				   [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []],
@@ -96,11 +97,21 @@ function displayMasterSched () {
 				text = ""; listOfFriends = [];
 				for (var k = 0; k < masterSched[i][j].length; k++) {
 					// These are each friend during this specific break.
-					if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
-						// Show this user to display, since it does not exist in the ignoreFriendScheds array
-						text = text + ", " + masterSched[i][j][k].fname;
-						listOfFriends.push(masterSched[i][j][k].fname + " " + masterSched[i][j][k].lname);
-						numberOfFriendsOnBreak++;
+					
+					// If just trying to view one user, then ignore the other users
+					if (oneUserSoloTrack) {
+						if (oneUserSoloTrack === masterSched[i][j][k].punName) {
+							text = text + ", " + masterSched[i][j][k].fname;
+							listOfFriends.push(masterSched[i][j][k].fname + " " + masterSched[i][j][k].lname);
+							numberOfFriendsOnBreak++;
+						}
+					} else {
+						if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
+							// Show this user to display, since it does not exist in the ignoreFriendScheds array
+							text = text + ", " + masterSched[i][j][k].fname;
+							listOfFriends.push(masterSched[i][j][k].fname + " " + masterSched[i][j][k].lname);
+							numberOfFriendsOnBreak++;
+						}
 					}
 				}
 
@@ -191,11 +202,14 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 	for (var i = 0; i < serverData.users.length; i++) {
 		// debug && console.log(serverData.users[i]);
 		// Add Friend i to Sidebar
-		$temp = $("#friendsListTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
+		$temp = $("#friendsListTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");
+		$temp.on("mouseenter", bindFriendsListShowButtons);
+		$temp.on("mouseleave", bindFriendsListHideButtons);
 		$temp.data("friendName", serverData.users[i].punName);
 		$temp.find(".friendsListDynamic").data("friendName", serverData.users[i].punName);
-		$temp.find(".friendsListChangeDisplay").bind("click", bindFriendsListChangeDisplay);
-		$temp.find(".removeFriendDynamic").bind("click", bindRemoveFriendDynamic);
+		$temp.find(".friendsListChangeDisplay").on("click", bindFriendsListChangeDisplay);
+		$temp.find(".removeFriendDynamic").on("click", bindRemoveFriendDynamic);
+		$temp.find(".soloFriendDynamic").on("click", bindSoloFriendDynamic);
 
 		$temp.find("td.friendsListFriendName").text(serverData.users[i].fname + " " + serverData.users[i].lname);
 		$("#friendsListTableBody").append($temp);
@@ -225,18 +239,21 @@ socket.on("S2CfollowRequests", function (serverData) {
 
 	if (serverData.followRequests.length) {
 		// You have follow requests!
-		$("#followRequestsDiv").removeClass("is-hidden");
+		// TODO change to first name and last name
 		for (var i = 0; i < serverData.followRequests.length; i++) {
-			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
+			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");
+			$temp.on("mouseenter", bindFollowRequestShowButtons);
+			$temp.on("mouseleave", bindFollowRequestHideButtons);
 			$temp.data("followRequestName", serverData.followRequests[i]);
 			$temp.find(".followRequestDynamic").data("followRequestName", serverData.followRequests[i]);
-			$temp.find(".acceptFollowRequestDynamic").bind("click", bindFollowRequestAcceptClick);
-			$temp.find(".rejectFollowRequestDynamic").bind("click", bindFollowRequestRejectClick);
+			$temp.find(".acceptFollowRequestDynamic").on("click", bindFollowRequestAcceptClick);
+			$temp.find(".rejectFollowRequestDynamic").on("click", bindFollowRequestRejectClick);
 
 			$temp.find("th").text(serverData.followRequests[i]);
 			$("#followRequestTableBody").append($temp);
 		}
 	}
+	$("#followRequestsCount").text(serverData.followRequests.length || "0");
 });
 
 // Socket: When Friend is Removed, Send Back a Request to Update Friend Schedule
@@ -277,6 +294,22 @@ socket.on("S2CaddUserRequestFailed", function S2CaddUserRequestFailed (response)
 	});
 });
 
+// Hover Functions
+function bindFollowRequestShowButtons () {
+	$(this).find(".followRequestDynamicBtn").removeClass("is-invisible")
+}
+
+function bindFollowRequestHideButtons () {
+	$(this).find(".followRequestDynamicBtn").addClass("is-invisible")
+}
+function bindFriendsListShowButtons () {
+	$(this).find(".friendsListDynamicBtn").removeClass("is-invisible")
+}
+
+function bindFriendsListHideButtons () {
+	$(this).find(".friendsListDynamicBtn").addClass("is-invisible")
+}
+
 // Accept Follow Request Clicked, send message to server
 function bindFollowRequestAcceptClick () {
 	socket.emit("C2SacceptFollowRequest", {requestGrantedFor: $(this).data("followRequestName"), requestGrantedBy: userProfile.punName});
@@ -303,6 +336,22 @@ function bindFriendsListChangeDisplay () {
 		if (ignoreFriendScheds.indexOf(friendName) < 0) {
 			ignoreFriendScheds.push(friendName);
 		}
+	}
+	displayMasterSched();
+}
+
+function bindSoloFriendDynamic () {
+	// Reset the Font Awesome star icons
+	$(".soloFriendButton").removeClass("fas").addClass("far");
+	$(".friendsListFriendName").css("fontWeight", "400");
+	if (!oneUserSoloTrack || oneUserSoloTrack !== $(this).data("friendName")) {
+		// No solo user yet, make this user the solo user, OR some other user already selected so change solo user to this one
+		oneUserSoloTrack = $(this).data("friendName");
+		$(this).find("i.soloFriendButton").removeClass("far").addClass("fas");
+		$(this).parent().siblings(".friendsListFriendName").css("fontWeight", "600");
+	} else if (oneUserSoloTrack === $(this).data("friendName")) {
+		// This is already the solo user, so disable solo functionality
+		oneUserSoloTrack = "";
 	}
 	displayMasterSched();
 }
