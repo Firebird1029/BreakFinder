@@ -85,6 +85,8 @@ function resetMasterSched () {
 // Display Master Sched
 function displayMasterSched () {
 	resetMasterSched();
+	var highestFriendCount = getHighestFriendCount();
+	debug && console.log("Highest number of friends in one break: " + highestFriendCount)
 	var text, numberOfFriendsOnBreak, listOfFriends = [];
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
@@ -96,14 +98,18 @@ function displayMasterSched () {
 					// These are each friend during this specific break.
 					if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
 						// Show this user to display, since it does not exist in the ignoreFriendScheds array
-						text = text + masterSched[i][j][k].fname;
+						text = text + ", " + masterSched[i][j][k].fname;
 						listOfFriends.push(masterSched[i][j][k].fname);
 						numberOfFriendsOnBreak++;
 					}
 				}
 				if (numberOfFriendsOnBreak > 0) {
 					// .text(text) or .text("" + numberOfFriendsOnBreak + " friends")
-					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "green").text(text);
+					text = text.substring(2);
+					$("td." + conversionTable[i] + "Col.mod" + (j + 1))
+						.data("backgroundColorAlpha", ((0.7*(numberOfFriendsOnBreak / highestFriendCount))+0.3))
+						.css("backgroundColor", "rgba(227, 182, 14, 1)")
+						.text(text);
 					// https://stackoverflow.com/questions/2151084/map-a-2d-array-onto-a-1d-array
 					tippyInstances[i+(6*j)].setContent(listOfFriends.join("<br>"));
 					tippyInstances[i+(6*j)].enable();
@@ -111,6 +117,34 @@ function displayMasterSched () {
 			}
 		}
 	}
+	animateMasterSched();
+}
+
+// Animation Setup: Get Most Amount of Friends In Break At Once
+function getHighestFriendCount () {
+	var highestFriendCount = 0;
+	for (var i = 0; i < masterSched.length; i++) {
+		for (var j = 0; j < masterSched[i].length; j++) {
+			if (masterSched[i][j].length > highestFriendCount) {
+				highestFriendCount = masterSched[i][j].length;
+			}
+		}
+	}
+	return highestFriendCount;
+}
+
+// Animation For Master Sched
+function animateMasterSched () {
+	debug && console.log("Animating master schedule.");
+	var alphaColor;
+	for (var i = 0; i < masterSched.length; i++) {
+		for (var j = 0; j < masterSched[i].length; j++) {
+			alphaColor = $("td." + conversionTable[i] + "Col.mod" + (j + 1)).data("backgroundColorAlpha");
+			// $("td." + conversionTable[i] + "Col.mod" + (j + 1)).animate({backgroundColor: "rgba(227, 182, 14, " + alphaColor + ")"})
+			$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "rgba(227, 182, 14, " + alphaColor + ")");
+		}
+	}
+	// backgroundColorAlpha
 }
 
 // Socket IO Functions

@@ -15,6 +15,17 @@ body {
 .schedMod {
 	font-size: 0.8rem;
 	cursor: default;
+	max-width: 1px; // Weird solution to weird problem
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-webkit-transition: background-color 1s ease-out;
+	-o-transition: background-color 1s ease-out;
+	transition: background-color 1s ease-out;
+}
+
+.schedModTimeHeader {
+	width: 6rem;
 }
 
 .tippy-tooltip.punahou-theme {
