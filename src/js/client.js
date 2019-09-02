@@ -86,7 +86,6 @@ function resetMasterSched () {
 function displayMasterSched () {
 	resetMasterSched();
 	var highestFriendCount = getHighestFriendCount();
-	debug && console.log("Highest number of friends in one break: " + highestFriendCount)
 	var text, numberOfFriendsOnBreak, listOfFriends = [];
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
@@ -99,17 +98,18 @@ function displayMasterSched () {
 					if (ignoreFriendScheds.indexOf(masterSched[i][j][k].punName) < 0) {
 						// Show this user to display, since it does not exist in the ignoreFriendScheds array
 						text = text + ", " + masterSched[i][j][k].fname;
-						listOfFriends.push(masterSched[i][j][k].fname);
+						listOfFriends.push(masterSched[i][j][k].fname + " " + masterSched[i][j][k].lname);
 						numberOfFriendsOnBreak++;
 					}
 				}
+
+				// Color of Mod
+				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).data("backgroundColorAlpha", ((0.7*(numberOfFriendsOnBreak / highestFriendCount))+0.3));
+
 				if (numberOfFriendsOnBreak > 0) {
 					// .text(text) or .text("" + numberOfFriendsOnBreak + " friends")
 					text = text.substring(2);
-					$("td." + conversionTable[i] + "Col.mod" + (j + 1))
-						.data("backgroundColorAlpha", ((0.7*(numberOfFriendsOnBreak / highestFriendCount))+0.3))
-						.css("backgroundColor", "rgba(227, 182, 14, 1)")
-						.text(text);
+					$("td." + conversionTable[i] + "Col.mod" + (j + 1)).text(text);
 					// https://stackoverflow.com/questions/2151084/map-a-2d-array-onto-a-1d-array
 					tippyInstances[i+(6*j)].setContent(listOfFriends.join("<br>"));
 					tippyInstances[i+(6*j)].enable();
@@ -135,11 +135,12 @@ function getHighestFriendCount () {
 
 // Animation For Master Sched
 function animateMasterSched () {
-	debug && console.log("Animating master schedule.");
 	var alphaColor;
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
 			alphaColor = $("td." + conversionTable[i] + "Col.mod" + (j + 1)).data("backgroundColorAlpha");
+			// If no friends on this break, don't color the mod block
+			if (!$("td." + conversionTable[i] + "Col.mod" + (j + 1)).text().length) { alphaColor = 0 }
 			// $("td." + conversionTable[i] + "Col.mod" + (j + 1)).animate({backgroundColor: "rgba(227, 182, 14, " + alphaColor + ")"})
 			$("td." + conversionTable[i] + "Col.mod" + (j + 1)).css("backgroundColor", "rgba(227, 182, 14, " + alphaColor + ")");
 		}
