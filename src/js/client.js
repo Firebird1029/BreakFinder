@@ -221,7 +221,6 @@ socket.on("S2CfollowRequests", function (serverData) {
 
 	if (serverData.followRequests.length) {
 		// You have follow requests!
-		$("#followRequestsDiv").removeClass("is-hidden");
 		for (var i = 0; i < serverData.followRequests.length; i++) {
 			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");;
 			$temp.data("followRequestName", serverData.followRequests[i]);
@@ -233,6 +232,7 @@ socket.on("S2CfollowRequests", function (serverData) {
 			$("#followRequestTableBody").append($temp);
 		}
 	}
+	$("#followRequestsCount").text(serverData.followRequests.length || "0");
 });
 
 // Socket: When Friend is Removed, Send Back a Request to Update Friend Schedule
