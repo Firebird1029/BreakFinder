@@ -152,7 +152,8 @@ function getDataFromTable(html, val, callback) {
 			 * Push a 1 into the array if you have a class, a 0 if you don't
 			 */
 			if (currentCell.children().length > 1) {
-				data[j - 2].push(1);
+				var arr = currentCell.text()
+				data[j - 2].push(currentCell.html().split("<")[0].split(" ")[1]);
 			} else {
 				data[j - 2].push(0);
 			}

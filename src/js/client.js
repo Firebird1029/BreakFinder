@@ -90,6 +90,7 @@ function displayMasterSched () {
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
 			numberOfFriendsOnBreak = 0;
+			console.log(masterSched[i][j]);
 			if (masterSched[i][j].length > 0) {
 				// You have friends on this break!
 				text = ""; listOfFriends = [];
@@ -114,6 +115,9 @@ function displayMasterSched () {
 					tippyInstances[i+(6*j)].setContent(listOfFriends.join("<br>"));
 					tippyInstances[i+(6*j)].enable();
 				}
+			} else {
+				text = (userProfile.schedule[i][j] == 0) ? "" : userProfile.schedule[i][j];
+				$("td." + conversionTable[i] + "Col.mod" + (j + 1)).text(text);
 			}
 		}
 	}
