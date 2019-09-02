@@ -68,7 +68,7 @@ $("#logout").on("click", function() {
 	var auth2 = gapi.auth2.getAuthInstance();
 	auth2.signOut().then(function () {
 		debug && console.log("User signed out.");
-		window.location.reload(false);
+		window.location.reload();
 	});
 });
 
