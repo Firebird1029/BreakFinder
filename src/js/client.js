@@ -155,7 +155,7 @@ socket.on("connectionReceived", function connectionReceived () {
 });
 
 // Logout
-socket.on("logoutPlease", function () {
+socket.on("logoutPlease", function logoutPlease () {
 	$("#logout").click();
 });
 
@@ -236,14 +236,41 @@ socket.on("S2CfollowRequests", function (serverData) {
 });
 
 // Socket: When Friend is Removed, Send Back a Request to Update Friend Schedule
-socket.on("S2CremoveMyFriendRequestSuccessful", function () {
+socket.on("S2CremoveMyFriendRequestSuccessful", function S2CremoveMyFriendRequestSuccessful () {
 	socket.emit("C2SsendMyFriendScheds", {asker: userProfile.punName});
 });
 
-// Add User Button Clicked, send message to server
-$("#addUserButton").click(function() {
+// Add User Button Clicked, send message to server to send follow request
+$("#addUserInput").on("keyup", function (event) {
+	if(event.which === 13 || event.keyCode === 13) {
+		$("#addUserButton").click();
+	}
+});
+$("#addUserButton").click(function addUserButtonClicked () {
 	socket.emit("C2SaddUserRequest", {asker: userProfile.punName, requesting: $("#addUserInput").val()});
 	$("#addUserInput").val("");
+});
+
+// Follow Request Sent Successfully
+socket.on("S2CaddUserRequestSuccessful", function S2CaddUserRequestSuccessful () {
+	$("body").overhang({
+		custom: true,
+		html: true,
+		primary: "#004B86", // TODO change to green
+		accent: "#e3b50e",
+		message: "<div class=\"overHangText\">Request sent!</div>"
+	});
+});
+
+// Follow Request Sent Failed
+socket.on("S2CaddUserRequestFailed", function S2CaddUserRequestFailed (response) {
+	$("body").overhang({
+		custom: true,
+		html: true,
+		primary: "#004B86", // TODO change to red
+		accent: "#e3b50e",
+		message: "<div class=\"overHangText\">" + response.message + "</div>"
+	});
 });
 
 // Accept Follow Request Clicked, send message to server
@@ -336,7 +363,7 @@ $punPassword.on("keyup", function (event) {
 	}
 });
 
-socket.on("loginUserExists", function () {
+socket.on("loginUserExists", function loginUserExists () {
 	// Show Google Sign-In Button
 	$("#usernameCheckLoading").addClass("is-invisible");
 	$("#loginTopSection").animateCss("fadeOut", function () {
@@ -346,13 +373,13 @@ socket.on("loginUserExists", function () {
 	});
 });
 
-socket.on("loginUserDoesNotExist", function () {
+socket.on("loginUserDoesNotExist", function loginUserDoesNotExist () {
 	$("#usernameCheckLoading").addClass("is-invisible");
 	$punPassword.animateCss("fadeIn").removeClass("is-invisible");
 	$punNewAccBtn.animateCss("fadeIn").removeClass("is-invisible");
 });
 
-$punNewAccBtn.click(function () {
+$punNewAccBtn.click(function punNewAccBtnClicked () {
 	$("#failMessage").addClass("is-invisible");
 	$("#punahouUsername, #punahouPassword, #punahouCreateAccount").attr("disabled", true);
 	// $punPassword.attr("disabled", true);

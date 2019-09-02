@@ -7,6 +7,7 @@ var debug = true;
  * TODO
  * When you have no friends yet, show message to add friends
  * Comment EVERYTHING
+ * Find all function () and change to named functions
  *
  * Resources:
  * https://bulma.io/documentation/
@@ -293,9 +294,23 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 	// Add User Request
 	socket.on("C2SaddUserRequest", function addUser (request) {
 		debug && console.log("Running CSaddUserRequest", request);
-		// Add follow request function TODO -- so I can follow multiple people
-		editUserDataByPunName(request.requesting, {followRequests: [request.asker]}, function () {
-			socket.emit("S2CaddUserRequestSccessful", {originalRequest: request});
+		getUserDataByPunName(request.requesting, function (userObject) {
+			if (userObject) {
+				// User exists. First, check if you are already following that user. If not, add to requested user's followRequests array.
+				getUserDataByPunName(request.asker, function (userObject) {
+					if (userObject.following.indexOf(request.requesting) > -1 || request.asker === request.requesting) {
+						// You are already following that user! Or you are requesting yourself.
+						socket.emit("S2CaddUserRequestFailed", {originalRequest: request, message: "You are already following that user!"});
+					} else {
+						editUserDataByPunNameArray(request.requesting, "push", "followRequests", request.asker, function () {
+							socket.emit("S2CaddUserRequestSuccessful", {originalRequest: request});
+						});
+					}
+				})				
+			} else {
+				// User doesn't exist. Notify on client-side that they don't exist.
+				socket.emit("S2CaddUserRequestFailed", {originalRequest: request, message: "User doesn't exist yet. Ask them to make an account!"});
+			}
 		});
 	});
 
