@@ -419,10 +419,10 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 			// debug && console.log(payload);
 			// If request specified a G Suite domain:
 			//const domain = payload['hd'];
-			if (options.username != payload.email.split("@")[0]) {
+			// if (options.username != payload.email.split("@")[0]) {
 				// Username and Google Account mismatch
 				socket.emit("accountMismatch");
-			} else {
+			// } else {
 				// After Google Verification Process
 				if (options.username && options.password) {
 					// Username & password both exist --> new user (although username/password might be wrong)
@@ -446,7 +446,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 						}
 					});
 				}
-			}
+			// }
 		}
 		verify().catch(console.error);
 	});
