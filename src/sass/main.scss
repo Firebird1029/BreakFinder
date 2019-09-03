@@ -46,3 +46,9 @@ body {
 .overHangText {
 	font-family: "proxima_novaregular", Arial;
 }
+
+.friendsListFriendName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 1px;
+}

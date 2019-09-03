@@ -33,7 +33,7 @@ html(lang="en")
 							.g-signin2.is-invisible(data-onsuccess="onSignIn", style="display: inline-block")
 			.columns
 				.column.is-one-quarter
-					section.section
+					section.section(style="padding: 3rem 0rem 3rem 1.5rem;")
 						#sideBarContainer.initiallyHidden.is-hidden(style="max-height: 44rem; overflow-y: scroll;")
 							#followRequestsDiv
 								table.table.is-hoverable(style="width: 100%")
@@ -47,8 +47,8 @@ html(lang="en")
 									tbody#followRequestTableBody
 										tr#followRequestTableRowTemplate.is-hidden.followRequestTableRow
 											th.followRequestDynamic bob
-											td: a.followRequestDynamic.followRequestDynamicBtn.acceptFollowRequestDynamic.is-invisible: span.icon: i.far.fa-check
-											td: a.followRequestDynamic.followRequestDynamicBtn.rejectFollowRequestDynamic.is-invisible: span.icon: i.far.fa-times
+											td: a.followRequestDynamic.followRequestDynamicBtn.acceptFollowRequestDynamic: span.icon: i.far.fa-check
+											td: a.followRequestDynamic.followRequestDynamicBtn.rejectFollowRequestDynamic: span.icon: i.far.fa-times
 								hr
 								br
 							#friendsList
@@ -68,7 +68,7 @@ html(lang="en")
 								hr
 								br
 							#followRequestSection
-								input.input#addUserInput
+								input.input#addUserInput(placeholder="i.e. jdoe19")
 								button.button#addUserButton Send Request
 								hr
 								br

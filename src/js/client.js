@@ -241,8 +241,8 @@ socket.on("S2CfollowRequests", function (serverData) {
 		// TODO change to first name and last name
 		for (var i = 0; i < serverData.followRequests.length; i++) {
 			$temp = $("#followRequestTableRowTemplate").clone().removeClass("is-hidden").removeAttr("id");
-			$temp.on("mouseenter", bindFollowRequestShowButtons);
-			$temp.on("mouseleave", bindFollowRequestHideButtons);
+			// $temp.on("mouseenter", bindFollowRequestShowButtons);
+			// $temp.on("mouseleave", bindFollowRequestHideButtons);
 			$temp.data("followRequestName", serverData.followRequests[i]);
 			$temp.find(".followRequestDynamic").data("followRequestName", serverData.followRequests[i]);
 			$temp.find(".acceptFollowRequestDynamic").on("click", bindFollowRequestAcceptClick);
@@ -313,12 +313,14 @@ function bindFriendsListHideButtons () {
 function bindFollowRequestAcceptClick () {
 	socket.emit("C2SacceptFollowRequest", {requestGrantedFor: $(this).data("followRequestName"), requestGrantedBy: userProfile.punName});
 	$(this).closest("tr").remove();
+	$("#followRequestsCount").text(Number($("#followRequestsCount").text())-1);
 }
 
 // Reject Follow Request Clicked
 function bindFollowRequestRejectClick () {
 	socket.emit("C2SrejectFollowRequest", {requestRejectedFor: $(this).data("followRequestName"), requestRejectedBy: userProfile.punName});
 	$(this).closest("tr").remove();
+	$("#followRequestsCount").text(Number($("#followRequestsCount").text())-1);
 }
 
 // Change Display of Friend

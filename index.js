@@ -5,12 +5,16 @@ var debug = true;
  * Notes
  *
  * TODOS
+ * Diza: common classes
+ * Realtime requests refresh
  * If Google and username don't match after Google login
+ * Prob had to sanitize add user input too to lowercase
  * When you have no friends yet, show message to add friends (!)
  * Be able to edit your schedule
  * Locate all todos
  * Optimize nightmare
  * Favicon
+ * We should create something where ppl input their gterm that they got and we can say whos in it
  * Find all function () and change to named functions
  * Comment EVERYTHING
  *
@@ -82,7 +86,7 @@ function storeUserData (data, callback) {
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (!_.find(newData.users, {user: data.user})) {
 			// User doesn't exist yet
-			debug && console.log("Creating new user");
+			debug && console.log("Creating new user", data.punName);
 			newData.users.push(data);
 			jsonfile.writeFile("models/data.json", newData, function (err) {
 				if (err) console.error(err);
@@ -112,7 +116,7 @@ function editUserDataByPunName (punName, data, callback) {
 		if (err) console.error(err);
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (_.find(newData.users, {punName: punName})) {
-			debug && console.log("Editing user: " + punName);
+			debug && console.log("editUserDataByPunName: Editing user: " + punName, data);
 			var userIndex = _.findIndex(newData.users, {punName: punName});
 			newData.users[userIndex]= _.assign(newData.users[userIndex], data);
 			
@@ -132,7 +136,7 @@ function editUserDataByPunNameArray (punName, command, arrayName, data, callback
 		if (err) console.error(err);
 		var newData = JSON.parse(JSON.stringify(obj));
 		if (_.find(newData.users, {punName: punName})) {
-			debug && console.log("Editing user: " + punName);
+			debug && console.log("editUserDataByPunNameArray: Editing user: " + punName, command, arrayName, data);
 			var userIndex = _.findIndex(newData.users, {punName: punName});
 			if (command === "push") {
 				if (newData.users[userIndex][arrayName].indexOf(data) < 0) {
@@ -266,7 +270,7 @@ function getStudentDataViaNightmare (username, password, callback) {
 
 // User Manipulation Functions
 function compileFriendScheds (punName, callback) {
-	debug && console.log("Running compileFriendScheds", punName);
+	// debug && console.log("Running compileFriendScheds", punName);
 	// Who are your friends? Let's look in your user object and find out, so we can loop through them and pull the scheds!
 	var compileFriendScheds = [];
 	getUserDataByPunName(punName, function (userObject) {
@@ -380,11 +384,11 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 		getStudentDataViaNightmare(request.username, request.password, function(studentData) {
 			if (studentData === "failedLogin") {
 				// Login failed -- username & password don't match
-				debug && console.log("Nightmare login failed.");
+				debug && console.log("Nightmare login failed.", request.username);
 				socket.emit("failedLogin");
 			} else {
 				// Login successful -- pulled schedule
-				debug && console.log("Nightmare login successful!");
+				debug && console.log("Nightmare login successful!", request.username);
 				socket.emit("successfulLogin", studentData);
 			}
 		})
