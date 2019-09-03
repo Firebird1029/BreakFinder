@@ -4,14 +4,15 @@ var debug = true;
 /*
  * Notes
  *
- * TODO
+ * TODOS
+ * If Google and username don't match after Google login
  * When you have no friends yet, show message to add friends (!)
  * Be able to edit your schedule
- * Optimize nightmare
- * Comment EVERYTHING
- * Find all function () and change to named functions
- * If Google and username don't match after Google login
  * Locate all todos
+ * Optimize nightmare
+ * Favicon
+ * Find all function () and change to named functions
+ * Comment EVERYTHING
  *
  * 
  * https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
