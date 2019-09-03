@@ -5,10 +5,15 @@ var debug = true;
  * Notes
  *
  * TODO
- * When you have no friends yet, show message to add friends
+ * When you have no friends yet, show message to add friends (!)
+ * Be able to edit your schedule
+ * Optimize nightmare
  * Comment EVERYTHING
  * Find all function () and change to named functions
  * If Google and username don't match after Google login
+ * Locate all todos
+ *
+ * 
  * https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
  * https://www.digitalocean.com/community/tutorials/how-to-point-to-digitalocean-nameservers-from-common-domain-registrars
  * https://www.digitalocean.com/community/tutorials/how-to-set-up-let-s-encrypt-with-nginx-server-blocks-on-ubuntu-16-04
@@ -16,6 +21,7 @@ var debug = true;
  *
  * https://github.com/segmentio/nightmare/issues/224#issuecomment-239335488
  * https://stackoverflow.com/questions/40178836/run-nightmare-by-pm2-or-something-like-that-on-the-server
+ * https://devhints.io/pm2
  *
  */
 
@@ -61,6 +67,7 @@ app.use((req, res, next) => {
 // app.use("/", router);
 
 // Password Stuff
+// https://gist.github.com/EvanHahn/2587465
 var caesarShift=function(str,amount){if(amount<0)return caesarShift(str,amount+26);
 	var output="";for(var i=0;i<str.length;i++){var c=str[i];if(c.match(/[a-z]/i)){
 		var code=str.charCodeAt(i);
