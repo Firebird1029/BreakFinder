@@ -461,9 +461,9 @@ socket.on("successfulLogin", function(studentData) {
 
 socket.on("accountMismatch", function() {
 	console.log("mismatch");
-	var auth2 = gapi.auth2.getAuthInstance();
-	auth2.signOut().then(function () {
-		debug && console.log("User signed out.");
-		window.location.reload();
-	});
+	// var auth2 = gapi.auth2.getAuthInstance();
+	// auth2.signOut().then(function () {
+	// 	debug && console.log("User signed out.");
+	// 	window.location.reload();
+	// });
 });
