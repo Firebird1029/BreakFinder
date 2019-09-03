@@ -421,7 +421,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 			//const domain = payload['hd'];
 			// if (options.username != payload.email.split("@")[0]) {
 				// Username and Google Account mismatch
-				socket.emit("accountMismatch");
+				// socket.emit("accountMismatch");
 			// } else {
 				// After Google Verification Process
 				if (options.username && options.password) {
