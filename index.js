@@ -152,8 +152,8 @@ function getDataFromTable(html, val, callback) {
 			 * Push a 1 into the array if you have a class, a 0 if you don't
 			 */
 			if (currentCell.children().length > 1) {
-				var arr = currentCell.text()
-				data[j - 2].push(currentCell.html().split("<")[0].split(" ")[1]);
+				var text = currentCell.html()
+				data[j - 2].push(text.split("<")[0].substring(text.indexOf(' ')+1));
 			} else {
 				data[j - 2].push(0);
 			}
@@ -400,29 +400,33 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 			// debug && console.log(payload);
 			// If request specified a G Suite domain:
 			//const domain = payload['hd'];
-			
-			// After Google Verification Process
-			if (options.username && options.password) {
-				// Username & password both exist --> new user (although username/password might be wrong)
-				
-				 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: options.nightmareData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {
-				 	getUserData(payload.sub, function (userData) {
-							socket.emit("S2CsendBasicUserData", userData);
-						});
-				 });
-
+			if (options.username != payload.email.split("@")[0]) {
+				// Username and Google Account mismatch
+				socket.emit("accountMismatch");
 			} else {
-				// Username and/or password missing --> check if user exists or not
-				getUserData(payload.sub, function (userData) {
-					if (userData) {
-						// User exists, so send back their schedule
-						socket.emit("S2CsendBasicUserData", userData);
-					} else {
-						// User doesn't exist, so log them back out >:(
-						debug && console.log("User doesn't exist, logging out");
-						socket.emit("logoutPlease");
-					}
-				});
+				// After Google Verification Process
+				if (options.username && options.password) {
+					// Username & password both exist --> new user (although username/password might be wrong)
+					
+					 storeUserData({user: payload.sub, punName: payload.email.substr(0, payload.email.indexOf("@")), schedule: options.nightmareData, following: [], followRequests: [], fname: options.fname, lname: options.lname}, function () {
+					 	getUserData(payload.sub, function (userData) {
+								socket.emit("S2CsendBasicUserData", userData);
+							});
+					 });
+
+				} else {
+					// Username and/or password missing --> check if user exists or not
+					getUserData(payload.sub, function (userData) {
+						if (userData) {
+							// User exists, so send back their schedule
+							socket.emit("S2CsendBasicUserData", userData);
+						} else {
+							// User doesn't exist, so log them back out >:(
+							debug && console.log("User doesn't exist, logging out");
+							socket.emit("logoutPlease");
+						}
+					});
+				}
 			}
 		}
 		verify().catch(console.error);

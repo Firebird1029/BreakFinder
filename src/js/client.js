@@ -91,7 +91,6 @@ function displayMasterSched () {
 	for (var i = 0; i < masterSched.length; i++) {
 		for (var j = 0; j < masterSched[i].length; j++) {
 			numberOfFriendsOnBreak = 0;
-			console.log(masterSched[i][j]);
 			if (masterSched[i][j].length > 0) {
 				// You have friends on this break!
 				text = ""; listOfFriends = [];
@@ -220,7 +219,7 @@ socket.on("S2CcompiledFriendScheds", function (serverData) {
 				if (!serverData.users[i].schedule[m][n]) {
 					// Break! Great! Now let's see if you, the user, also has that break
 					// $("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "red");
-					if (userProfile.schedule[m][n] === serverData.users[i].schedule[m][n]) {
+					if ((userProfile.schedule[m][n] === serverData.users[i].schedule[m][n]) && (userProfile.schedule[m][n] == 0)) {
 						//$("td." + conversionTable[m] + "Col.mod" + (n + 1)).css("backgroundColor", "green").text("Jason");
 						masterSched[m][n].push({punName: serverData.users[i].punName, fname: serverData.users[i].fname, lname: serverData.users[i].lname})
 					}
@@ -456,5 +455,14 @@ socket.on("successfulLogin", function(studentData) {
 		$("#loginTopSection").addClass("is-hidden");
 		$("#welcomeBackMsg").text("Final step! Link your Google account to get started.").animateCss("fadeIn").removeClass("is-invisible");
 		$gSignin.animateCss("fadeIn").removeClass("is-invisible");
+	});
+});
+
+socket.on("accountMismatch", function() {
+	console.log("mismatch");
+	var auth2 = gapi.auth2.getAuthInstance();
+	auth2.signOut().then(function () {
+		debug && console.log("User signed out.");
+		window.location.reload();
 	});
 });
