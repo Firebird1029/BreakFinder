@@ -8,6 +8,11 @@ var debug = true;
  * When you have no friends yet, show message to add friends
  * Comment EVERYTHING
  * Find all function () and change to named functions
+ * If Google and username don't match after Google login
+ * https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
+ * https://www.digitalocean.com/community/tutorials/how-to-point-to-digitalocean-nameservers-from-common-domain-registrars
+ * https://www.digitalocean.com/community/tutorials/how-to-set-up-let-s-encrypt-with-nginx-server-blocks-on-ubuntu-16-04
+ * 		https://www.digitalocean.com/community/tutorials/how-to-set-up-nginx-server-blocks-virtual-hosts-on-ubuntu-16-04
  *
  * Resources:
  * https://bulma.io/documentation/

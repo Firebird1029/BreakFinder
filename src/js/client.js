@@ -344,6 +344,7 @@ function bindSoloFriendDynamic () {
 		// No solo user yet, make this user the solo user, OR some other user already selected so change solo user to this one
 		oneUserSoloTrack = $(this).data("friendName");
 		$(this).find("i.soloFriendButton").removeClass("far").addClass("fas");
+		$(this).off("mouseleave");
 		$(this).parent().siblings(".friendsListFriendName").css("fontWeight", "600");
 	} else if (oneUserSoloTrack === $(this).data("friendName")) {
 		// This is already the solo user, so disable solo functionality
