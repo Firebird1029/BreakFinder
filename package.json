@@ -1,7 +1,7 @@
 {
 	"name": "BreakFinder",
 	"version": "1.0.0",
-	"description": "Find breaks you have with other students and faculty.",
+	"description": "SchedMatch — Compare schedules with friends and classmates.",
 	"homepage": "https://github.com/Firebird1029/BreakFinder",
 	"bugs": {
 		"url": "https://github.com/Firebird1029/BreakFinder/issues",
