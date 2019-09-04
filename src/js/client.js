@@ -293,6 +293,12 @@ socket.on("S2CaddUserRequestFailed", function S2CaddUserRequestFailed (response)
 	});
 });
 
+socket.on("S2ACcheckIfAddRequestMatches", function S2CCheckUser (response) {
+	if (response.userToRefresh === userProfile.punName) {
+		socket.emit("C2SsendMyFollowRequests", {asker: userProfile.punName});
+	}
+});
+
 // Hover Functions
 function bindFollowRequestShowButtons () {
 	$(this).find(".followRequestDynamicBtn").removeClass("is-invisible")

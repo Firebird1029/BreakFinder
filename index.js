@@ -315,6 +315,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 					} else {
 						editUserDataByPunNameArray(request.requesting, "push", "followRequests", request.asker, function () {
 							socket.emit("S2CaddUserRequestSuccessful", {originalRequest: request});
+							socket.broadcast.emit("S2ACcheckIfAddRequestMatches", {userToRefresh: request.asker});
 						});
 					}
 				})				
@@ -360,6 +361,7 @@ listener.sockets.on("connection", function connectionDetected (socket) {
 		});
 	});
 	socket.on("C2SsendMyFollowRequests", function sendMyFollowRequests (request) {
+		debug && console.log("Running C2SsendMyFollowRequests", request);
 		getUserDataByPunName(request.asker, function (userObject) {
 			// TODO - minor - switch from jtay20 requesting to view sched to Jason Tay requesting to view sched
 			socket.emit("S2CfollowRequests", {followRequests: userObject.followRequests});
