@@ -15,7 +15,7 @@ var debug = true;
  * Optimize nightmare
  * Favicon
  * We should create something where ppl input their gterm that they got and we can say whos in it
- * Find all function () and change to named functions
+ * Find all function () and change to named functions, console log time
  * Comment EVERYTHING
  *
  * 
